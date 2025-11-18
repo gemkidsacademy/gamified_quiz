@@ -13,6 +13,8 @@ import AddDoctor from "./components/AddDoctorPage";
 import EditDoctor from "./components/EditDoctorPage";
 import ViewDoctors from "./components/ViewDoctors";
 import DeleteDoctor from "./components/DeleteDoctor";
+import Chatbot_gamified_quiz from "./components/DeleteDoctor";
+
 
 import UsageDashboard from "./components/UsageDashboard";
 import StudentDashboard from "./components/StudentDashboard";
@@ -365,6 +367,12 @@ function App() {
             </PrivateRoute>
           }
         /> 
+        <Route
+          path="/ChatBot"
+          element={<Chatbot_gamified_quiz doctorData={doctorData} />}
+        />
+
+
         <Route
           path="/chatbot-settings"
           element={
