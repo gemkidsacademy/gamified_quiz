@@ -1,8 +1,15 @@
 import React, { useState } from "react";
-import "./StudentDashboard.css"; // import the CSS file
+import { useNavigate } from "react-router-dom"; // ✅ import useNavigate
+import "./StudentDashboard.css";
 
 function StudentDashboard({ student }) {
-  const [activeTab, setActiveTab] = useState("attempt"); // default tab
+  const [activeTab, setActiveTab] = useState("attempt");
+  const navigate = useNavigate(); // ✅ initialize navigate
+
+  const handleStartQuiz = () => {
+    // Navigate to ChatBot page and pass student data
+    navigate("/ChatBot", { state: { student } });
+  };
 
   return (
     <div className="dashboard-container">
@@ -30,7 +37,9 @@ function StudentDashboard({ student }) {
           <div className="tab-panel">
             <h3>Ready to attempt your weekly quiz?</h3>
             <p>Click below to start the quiz.</p>
-            <button className="dashboard-button">Start Quiz</button>
+            <button className="dashboard-button" onClick={handleStartQuiz}>
+              Start Quiz
+            </button>
           </div>
         )}
 
