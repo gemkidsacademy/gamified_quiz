@@ -30,7 +30,7 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const server = "https://krishbackend-production.up.railway.app";
+  const server = "https://web-production-481a5.up.railway.app";
 
 
   // --- Generate OTP ---
@@ -43,7 +43,7 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
 
   try {
     const response = await fetch(
-      "https://krishbackend-production.up.railway.app/send-otp",
+      "https://web-production-481a5.up.railway.app/send-otp",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
