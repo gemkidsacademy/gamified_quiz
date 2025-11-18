@@ -355,7 +355,7 @@ function App() {
         {/* Sociology Chatbot */}
         <Route
           path="/StudentDashboard"
-          element={<StudentDashboard doctorData={doctorData} />}
+          element={<StudentDashboard student={doctorData} />}
         />
         <Route
           path="/usage-dashboard"
