@@ -159,14 +159,18 @@ const handleLogin = async () => {
           return;
         }
 
-        if (verifyResponse.ok) {
+       if (verifyResponse.ok) {
           console.log("[INFO] OTP verified successfully");
-
+        
           setIsLoggedIn(true);
-          setDoctorData(verifyData.user);
-          setSessionToken(null); // or generate/manage session token here
+          setDoctorData({
+            student_id: verifyData.student_id,
+            phone_number: verifyData.phone_number,
+            name: verifyData.name
+          }); // ✅ map response directly
+          setSessionToken(null);
           
-          if (verifyData.user.name === "Admin") {
+          if (verifyData.name === "Admin") { // ✅ access 'name' directly
             navigate("/AdminPanel");
           } else {
             navigate("/ChatBot");
