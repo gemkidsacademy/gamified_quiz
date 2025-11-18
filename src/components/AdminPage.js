@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AdminPanel.css";
 import PdfUploader from "./PdfUploader";
-import ChatbotSettings from "./ChatbotSettings";
+
 import AddUserForm from "./AddUserForm";
 import EditUserForm from "./EditUserForm";
 import ViewUserModal from "./ViewUserModal";
@@ -140,18 +140,7 @@ const AdminPanel = () => {
             <PdfUploader />
           </div>
         )}
-        {/* Generic Chatbot) */}
-        {activeTab === "Generic_chatbot" && (
-          <div
-            className="tab-panel"
-            style={{
-              height: "100vh", // or a specific height
-              overflowY: "auto",
-            }}
-          >
-            <ChatbotSettings />
-          </div>
-        )}
+        
         
 
         {/* OpenAI Usage */}
