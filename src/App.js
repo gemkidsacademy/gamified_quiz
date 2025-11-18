@@ -13,7 +13,7 @@ import AddDoctor from "./components/AddDoctorPage";
 import EditDoctor from "./components/EditDoctorPage";
 import ViewDoctors from "./components/ViewDoctors";
 import DeleteDoctor from "./components/DeleteDoctor";
-import DemoChatbot from "./components/DemoChatbot";
+
 import UsageDashboard from "./components/UsageDashboard";
 import StudentDashboard from "./components/StudentDashboard";
 
@@ -99,7 +99,7 @@ const handleLogin = async () => {
         setSessionToken(data.session_token || null);
 
         if (data?.name === "Admin") navigate("/AdminPanel");
-        else navigate("/ChatBot");
+        else navigate("/StudentDashboard");
       } else {
         setError(data.detail || "Invalid credentials");
       }
@@ -354,8 +354,8 @@ function App() {
 
         {/* Sociology Chatbot */}
         <Route
-          path="/ChatBot"
-          element={<DemoChatbot doctorData={doctorData} />}
+          path="/StudentDashboard"
+          element={<StudentDashboard doctorData={doctorData} />}
         />
         <Route
           path="/usage-dashboard"
