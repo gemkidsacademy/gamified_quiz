@@ -173,7 +173,7 @@ const handleLogin = async () => {
           if (verifyData.name === "Admin") { // ✅ access 'name' directly
             navigate("/AdminPanel");
           } else {
-            navigate("/ChatBot");
+            navigate("/StudentDashboard");
           }
         } else {
           console.warn("[WARN] OTP verification failed:", verifyData);
