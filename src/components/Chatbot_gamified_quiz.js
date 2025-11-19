@@ -92,6 +92,17 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
       (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`
     );
   };
+  async function getStudentName(studentId) {
+    const response = await fetch(
+      `https://web-production-481a5.up.railway.app/student-name?student_id=${studentId}`
+    );
+  
+    if (!response.ok) {
+      throw new Error("Failed to fetch student name");
+    }
+  
+    return await response.json(); // { student_id, student_name }
+  }
 
   // ------------------ Handle answer submission ------------------
   const handleSubmit = async (e) => {
@@ -127,11 +138,13 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
       setIsWaiting(false);
       return;
     }
+    const { student_name } = await getStudentName(student.id);
 
     const payload = {
-      student_id: studentId,
-      class_name: className,
-      question_index: questionIndex,
+      student_id: student.id,
+      student_name,                // <-- fetched from backend
+      class_name: student.class_name,
+      question_index: currentIndex,
       selected_option: selectedOption,
     };
 
@@ -261,6 +274,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
 
