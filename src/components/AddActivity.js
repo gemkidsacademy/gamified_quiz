@@ -79,7 +79,7 @@ export default function AddActivity() {
             placeholder="You are a helpful quiz generator. Use the following topics to create a student quiz: {topics}. Include instructions, questions with options, and correct answers in JSON format."
             required
           />
-          <small>The prompt will automatically be converted to the required JSON format.</small>
+          
         </label>
 
         <label>
