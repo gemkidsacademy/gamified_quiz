@@ -15,7 +15,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   const fetchQuiz = async () => {
     try {
       const response = await fetch(
-        `https://your-backend.com/get-quiz?class_name=${encodeURIComponent(doctorData.class_name)}`
+        `https://web-production-481a5.up.railway.app/get-quiz?class_name=${encodeURIComponent(doctorData.class_name)}`
       );
       if (!response.ok) throw new Error("Failed to fetch quiz");
       const data = await response.json();
@@ -116,7 +116,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
   try {
     // Backend request
-    const url = `https://krishbackend-production.up.railway.app/search?query=${encodeURIComponent(
+    const url = `https://web-production-481a5.up.railway.app/search?query=${encodeURIComponent(
         userInput
     )}&reasoning=${encodeURIComponent(reasoningLevel)}&user_id=${encodeURIComponent(
         doctorData.name
@@ -247,6 +247,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
 
