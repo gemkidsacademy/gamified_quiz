@@ -12,29 +12,28 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const chatEndRef = useRef(null);
 
-  // ------------------ Redirect if no doctorData ------------------
-  if (!doctorData?.name) {
-    return <Navigate to="/" replace />;
-  }
-
-  // ------------------ Welcome message ------------------
-  useEffect(() => {
-    const welcomeMsg = {
-      sender: "bot",
-      text: `Welcome, Dr. ${doctorData.name}! Let's start your quiz.`,
-      links: [],
-    };
-    setMessages([welcomeMsg]);
-  }, [doctorData.name]);
-
   // ------------------ Auto-scroll ------------------
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isWaiting]);
 
+  // ------------------ Welcome message ------------------
+  useEffect(() => {
+    if (doctorData?.name) {
+      setMessages([
+        {
+          sender: "bot",
+          text: `Welcome, Dr. ${doctorData.name}! Let's start your quiz.`,
+          links: [],
+        },
+      ]);
+    }
+  }, [doctorData?.name]);
+
   // ------------------ Fetch Quiz ------------------
   useEffect(() => {
     const fetchQuiz = async () => {
+      if (!doctorData?.class_name) return;
       try {
         const response = await fetch(
           `https://web-production-481a5.up.railway.app/get-quiz?class_name=${encodeURIComponent(
@@ -60,8 +59,9 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
         ]);
       }
     };
-    if (doctorData.class_name) fetchQuiz();
-  }, [doctorData.class_name]);
+
+    fetchQuiz();
+  }, [doctorData?.class_name]);
 
   // ------------------ Helpers ------------------
   const parseBoldText = (text) => {
@@ -77,9 +77,11 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
       parts.push(<strong key={match.index}>{match[1]}</strong>);
       lastIndex = match.index + match[0].length;
     }
+
     if (lastIndex < text.length) {
       parts.push(<span key={lastIndex}>{text.slice(lastIndex)}</span>);
     }
+
     return parts;
   };
 
@@ -91,21 +93,20 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     );
   };
 
-  // ------------------ Handle Answer Submission ------------------
+  // ------------------ Handle answer submission ------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || !quiz) return;
 
     const studentAnswer = input.trim();
-    setInput("");
+    setInput(""); // clear input
     setIsWaiting(true);
 
     try {
       const question = quiz.questions[currentQuestionIndex];
 
-      // Save answer to backend
       const response = await fetch(
-        `https://web-production-481a5.up.railway.app/submit-quiz-answer`,
+        "https://web-production-481a5.up.railway.app/submit-quiz-answer",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -121,7 +122,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
       if (!response.ok) throw new Error(`Backend error: ${response.status}`);
       const data = await response.json();
 
-      // Add user message
+      // Add user's answer to chat
       setMessages((prev) => [...prev, { sender: "user", text: studentAnswer }]);
 
       // Show next question or completion
@@ -140,7 +141,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
             text: `Quiz completed! Your score: ${data.current_score}/${quiz.questions.length}`,
           },
         ]);
-        setCurrentQuestionIndex(null); // mark quiz as finished
+        setCurrentQuestionIndex(null);
       }
     } catch (err) {
       console.error("Error submitting answer:", err);
@@ -152,6 +153,11 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
       setIsWaiting(false);
     }
   };
+
+  // ------------------ Redirect if no doctorData ------------------
+  if (!doctorData?.name) {
+    return <Navigate to="/" replace />;
+  }
 
   // ------------------ Render ------------------
   return (
