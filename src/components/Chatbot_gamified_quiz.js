@@ -105,7 +105,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   setIsWaiting(true);
 
   try {
-    const studentId = doctorData.id;
+    const studentId = doctorData.student_id;
     const className = doctorData.class_name.trim();
     const studentName = (doctorData.name || "").trim();
     const questionIndex = currentQuestionIndex;
@@ -244,5 +244,6 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
