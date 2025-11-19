@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import "./DemoChatbot.css";
 
 export default function Chatbot_gamified_quiz({ doctorData }) {
+  // ------------------ State ------------------
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [reasoningLevel, setReasoningLevel] = useState("simple");
@@ -10,31 +11,26 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   const [quiz, setQuiz] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const chatEndRef = useRef(null);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
 
+  // ------------------ Redirect if no doctorData ------------------
+  if (!doctorData?.name) {
+    return <Navigate to="/" replace />;
+  }
+
+  // ------------------ Welcome message ------------------
+  useEffect(() => {
+    const welcomeMsg = {
+      sender: "bot",
+      text: `Welcome, Dr. ${doctorData.name}! Let's start your quiz.`,
+      links: [],
+    };
+    setMessages([welcomeMsg]);
+  }, [doctorData.name]);
 
   // ------------------ Auto-scroll ------------------
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isWaiting]);
-
-  
-
-  // ------------------ Welcome message ------------------
-  useEffect(() => {
-    if (doctorData?.name) {
-      const welcomeMsg = {
-        sender: "bot",
-        text: `Welcome, Dr. ${doctorData.name}! Let's start your quiz.`,
-        links: [],
-      };
-      setMessages([welcomeMsg]);
-    }
-  }, [doctorData?.name]);
-  // ------------------ Redirect if no doctorData ------------------
-  if (!doctorData?.name) {
-    return <Navigate to="/" replace />;
-  }
 
   // ------------------ Fetch Quiz ------------------
   useEffect(() => {
@@ -64,10 +60,10 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
         ]);
       }
     };
-    fetchQuiz();
+    if (doctorData.class_name) fetchQuiz();
   }, [doctorData.class_name]);
 
-  // ------------------ Helper: parse bold text ------------------
+  // ------------------ Helpers ------------------
   const parseBoldText = (text) => {
     const regex = /\*\*(.+?)\*\*/g;
     const parts = [];
@@ -87,7 +83,6 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     return parts;
   };
 
-  // ------------------ Helper: format links ------------------
   const formatMessageWithLinks = (text) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.replace(
@@ -96,71 +91,69 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     );
   };
 
-  // ------------------ Handle user answer submission ------------------
+  // ------------------ Handle Answer Submission ------------------
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!input.trim() || !quiz) return; // ignore empty input or if quiz not loaded
+    e.preventDefault();
+    if (!input.trim() || !quiz) return;
 
-  const studentAnswer = input.trim();
-  setInput(""); // clear input
-  setIsWaiting(true);
+    const studentAnswer = input.trim();
+    setInput("");
+    setIsWaiting(true);
 
-  try {
-    const questionIndex = currentQuestion;
-    const question = quiz.questions[questionIndex];
+    try {
+      const question = quiz.questions[currentQuestionIndex];
 
-    // Backend API call to save this answer
-    const response = await fetch(
-      `https://web-production-481a5.up.railway.app/submit-quiz-answer`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          student_id: doctorData.id,
-          class_name: doctorData.class_name,
-          question_index: questionIndex,
-          selected_option: studentAnswer
-        })
+      // Save answer to backend
+      const response = await fetch(
+        `https://web-production-481a5.up.railway.app/submit-quiz-answer`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            student_id: doctorData.id,
+            class_name: doctorData.class_name,
+            question_index: currentQuestionIndex,
+            selected_option: studentAnswer,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error(`Backend error: ${response.status}`);
+      const data = await response.json();
+
+      // Add user message
+      setMessages((prev) => [...prev, { sender: "user", text: studentAnswer }]);
+
+      // Show next question or completion
+      const nextIndex = currentQuestionIndex + 1;
+      if (quiz.questions[nextIndex]) {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "bot", text: quiz.questions[nextIndex].prompt },
+        ]);
+        setCurrentQuestionIndex(nextIndex);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: `Quiz completed! Your score: ${data.current_score}/${quiz.questions.length}`,
+          },
+        ]);
+        setCurrentQuestionIndex(null); // mark quiz as finished
       }
-    );
-
-    if (!response.ok) throw new Error(`Backend error: ${response.status}`);
-    const data = await response.json();
-
-    // Add user's answer to chat
-    setMessages((prev) => [
-      ...prev,
-      { sender: "user", text: studentAnswer }
-    ]);
-
-    // Add bot message with next question or completion message
-    const nextIndex = questionIndex + 1;
-    if (quiz.questions[nextIndex]) {
-      // Show next question
+    } catch (err) {
+      console.error("Error submitting answer:", err);
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: quiz.questions[nextIndex].prompt }
+        { sender: "bot", text: "Sorry, there was a problem recording your answer." },
       ]);
-      setCurrentQuestion(nextIndex);
-    } else {
-      // Quiz completed
-      setMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: `Quiz completed! Your score: ${data.current_score}/${quiz.questions.length}` }
-      ]);
-      setCurrentQuestion(null); // mark quiz as finished
+    } finally {
+      setIsWaiting(false);
     }
-  } catch (err) {
-    console.error("Error submitting answer:", err);
-    setMessages((prev) => [
-      ...prev,
-      { sender: "bot", text: "Sorry, there was a problem recording your answer." }
-    ]);
-  } finally {
-    setIsWaiting(false);
-  }
-};
+  };
 
+  // ------------------ Render ------------------
   return (
     <div className="chat-container">
       <div className="chat-box">
@@ -174,7 +167,12 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
                   <div dangerouslySetInnerHTML={{ __html: formatMessageWithLinks(msg.text) }} />
                   {Array.isArray(msg.links) && msg.links.length > 0 && (
                     <div className="pdf-links">
-                      <a href={msg.links[0]} target="_blank" rel="noopener noreferrer" className="pdf-link">
+                      <a
+                        href={msg.links[0]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="pdf-link"
+                      >
                         Open PDF
                       </a>
                     </div>
@@ -194,7 +192,11 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
           <div ref={chatEndRef} />
         </div>
 
-        <form onSubmit={handleSubmit} className="chat-input" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <form
+          onSubmit={handleSubmit}
+          className="chat-input"
+          style={{ display: "flex", gap: "8px", alignItems: "center" }}
+        >
           <input
             type="text"
             placeholder="Type your answer..."
@@ -203,7 +205,9 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
             style={{ flex: 1, padding: "8px" }}
           />
           <div className="reasoning-container">
-            <label htmlFor="reasoning-select" className="reasoning-label">Reasoning</label>
+            <label htmlFor="reasoning-select" className="reasoning-label">
+              Reasoning
+            </label>
             <select
               id="reasoning-select"
               value={reasoningLevel}
@@ -215,11 +219,11 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
               <option value="advanced">Advanced</option>
             </select>
           </div>
-          <button type="submit" style={{ padding: "8px 16px" }}>Submit</button>
+          <button type="submit" style={{ padding: "8px 16px" }}>
+            Submit
+          </button>
         </form>
       </div>
     </div>
   );
 }
-
-
