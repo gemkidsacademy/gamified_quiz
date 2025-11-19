@@ -99,19 +99,43 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   if (!input.trim() || !quiz) return;
 
   const studentAnswer = input.trim();
-  setInput(""); // Clear input
+  setInput(""); // clear input
   setIsWaiting(true);
 
   try {
-    const question = quiz.questions[currentQuestionIndex];
+    // Validate and coerce fields
+    const studentId = Number(doctorData?.id);
+    const className = String(doctorData?.class_name || "").trim();
+    const questionIndex = Number(currentQuestionIndex);
+    const selectedOption = String(studentAnswer).trim();
 
-    // Prepare payload with proper types
+    // Check for invalid values
+    if (!studentId || !className || isNaN(questionIndex) || !selectedOption) {
+      console.error("Invalid payload values:", {
+        studentId,
+        className,
+        questionIndex,
+        selectedOption,
+      });
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: "Cannot submit answer: invalid data detected.",
+        },
+      ]);
+      setIsWaiting(false);
+      return;
+    }
+
     const payload = {
-      student_id: Number(doctorData.id),            // ensure integer
-      class_name: String(doctorData.class_name),    // ensure string
-      question_index: Number(currentQuestionIndex), // ensure integer
-      selected_option: String(studentAnswer),       // ensure string
+      student_id: studentId,
+      class_name: className,
+      question_index: questionIndex,
+      selected_option: selectedOption,
     };
+
+    console.log("Submitting payload:", payload);
 
     const response = await fetch(
       "https://web-production-481a5.up.railway.app/submit-quiz-answer",
@@ -237,4 +261,5 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
