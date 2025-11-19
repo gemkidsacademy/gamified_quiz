@@ -97,80 +97,73 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
   // ------------------ Handle answer submission ------------------
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim() || !quiz) return;
+  e.preventDefault();
+  if (!input.trim() || !quiz) return;
 
-    const studentAnswer = input.trim();
-    setInput("");
-    setIsWaiting(true);
+  const studentAnswer = input.trim();
+  setInput("");
+  setIsWaiting(true);
 
-    try {
-      if (!doctorData?.id || !doctorData?.class_name) {
-        throw new Error("Student ID or class name missing");
+  try {
+    const studentId = doctorData.id;
+    const className = doctorData.class_name.trim();
+    const studentName = (doctorData.name || "").trim();
+    const questionIndex = currentQuestionIndex;
+    const selectedOption = studentAnswer;
+
+    const payload = {
+      student_id: studentId,
+      student_name: studentName,
+      class_name: className,
+      question_index: questionIndex,
+      selected_option: selectedOption,
+    };
+
+    console.log("Submitting payload:", payload);
+
+    const response = await fetch(
+      "https://web-production-481a5.up.railway.app/submit-quiz-answer",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       }
+    );
 
-      const studentId = doctorData.id;
-      const className = doctorData.class_name.trim();
-      const studentName = (doctorData.name || "").trim();
-      const questionIndex = currentQuestionIndex;
-      const selectedOption = studentAnswer;
+    if (!response.ok) throw new Error(`Backend error: ${response.status}`);
+    const data = await response.json();
 
-      // Fetch student name from backend
-      
+    // Add user's answer to chat
+    setMessages((prev) => [...prev, { sender: "user", text: studentAnswer }]);
 
-     const payload = {
-        student_id: doctorData.id,
-        student_name: studentName,
-        class_name: (doctorData.class_name || "").trim(),
-        question_index: currentQuestionIndex,
-        selected_option: selectedOption,
-     };
-
-      console.log("Submitting payload:", payload);
-
-      const response = await fetch(
-        "https://web-production-481a5.up.railway.app/submit-quiz-answer",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!response.ok) throw new Error(`Backend error: ${response.status}`);
-      const data = await response.json();
-
-      // Add user's answer to chat
-      setMessages((prev) => [...prev, { sender: "user", text: studentAnswer }]);
-
-      // Show next question or completion
-      const nextIndex = currentQuestionIndex + 1;
-      if (quiz.questions[nextIndex]) {
-        setMessages((prev) => [
-          ...prev,
-          { sender: "bot", text: quiz.questions[nextIndex].prompt },
-        ]);
-        setCurrentQuestionIndex(nextIndex);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: "bot",
-            text: `Quiz completed! Your score: ${data.current_score}/${quiz.questions.length}`,
-          },
-        ]);
-        setCurrentQuestionIndex(null);
-      }
-    } catch (err) {
-      console.error("Error submitting answer:", err);
+    // Show next question or completion
+    const nextIndex = currentQuestionIndex + 1;
+    if (quiz.questions[nextIndex]) {
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: "Sorry, there was a problem recording your answer." },
+        { sender: "bot", text: quiz.questions[nextIndex].prompt },
       ]);
-    } finally {
-      setIsWaiting(false);
+      setCurrentQuestionIndex(nextIndex);
+    } else {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: `Quiz completed! Your score: ${data.current_score}/${quiz.questions.length}`,
+        },
+      ]);
+      setCurrentQuestionIndex(null);
     }
-  };
+  } catch (err) {
+    console.error("Error submitting answer:", err);
+    setMessages((prev) => [
+      ...prev,
+      { sender: "bot", text: "Sorry, there was a problem recording your answer." },
+    ]);
+  } finally {
+    setIsWaiting(false);
+  }
+};
 
   // ------------------ Redirect if no doctorData ------------------
   if (!doctorData?.name) {
@@ -251,4 +244,5 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
