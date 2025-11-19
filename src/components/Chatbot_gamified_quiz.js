@@ -10,16 +10,15 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   const [quiz, setQuiz] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const chatEndRef = useRef(null);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+
 
   // ------------------ Auto-scroll ------------------
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isWaiting]);
 
-  // ------------------ Redirect if no doctorData ------------------
-  if (!doctorData?.name) {
-    return <Navigate to="/" replace />;
-  }
+  
 
   // ------------------ Welcome message ------------------
   useEffect(() => {
@@ -32,6 +31,10 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
       setMessages([welcomeMsg]);
     }
   }, [doctorData?.name]);
+  // ------------------ Redirect if no doctorData ------------------
+  if (!doctorData?.name) {
+    return <Navigate to="/" replace />;
+  }
 
   // ------------------ Fetch Quiz ------------------
   useEffect(() => {
@@ -218,4 +221,5 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
