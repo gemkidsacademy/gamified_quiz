@@ -1,14 +1,48 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ import useNavigate
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./StudentDashboard.css";
 
 function StudentDashboard({ student }) {
   const [activeTab, setActiveTab] = useState("attempt");
-  const navigate = useNavigate(); // ✅ initialize navigate
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const navigate = useNavigate();
 
   const handleStartQuiz = () => {
-    // Navigate to ChatBot page and pass student data
     navigate("/ChatBot", { state: { student } });
+  };
+
+  useEffect(() => {
+    if (activeTab === "leaderboard") {
+      // Fetch leaderboard only when the tab is active
+      fetchLeaderboard();
+    }
+  }, [activeTab]);
+
+  const fetchLeaderboard = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `https://web-production-481a5.up.railway.app/quiz-results?class_name=${encodeURIComponent(
+          student.class_name
+        )}`
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch leaderboard: ${response.status}`);
+      }
+      const data = await response.json();
+      // Sort by total_score descending
+      const sortedData = data.sort((a, b) => b.total_score - a.total_score);
+      setLeaderboard(sortedData);
+    } catch (err) {
+      console.error(err);
+      setError("Unable to load leaderboard.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,12 +80,21 @@ function StudentDashboard({ student }) {
         {activeTab === "leaderboard" && (
           <div className="tab-panel">
             <h3>Leaderboard</h3>
-            <p>Check how you rank among your classmates!</p>
-            <ul>
-              <li>Student A - 10 points</li>
-              <li>Student B - 8 points</li>
-              <li>{student.name} - 7 points</li>
-            </ul>
+            {loading && <p>Loading leaderboard...</p>}
+            {error && <p style={{ color: "red" }}>{error}</p>}
+            {!loading && !error && leaderboard.length === 0 && (
+              <p>No results available yet.</p>
+            )}
+            {!loading && !error && leaderboard.length > 0 && (
+              <ul>
+                {leaderboard.map((entry, index) => (
+                  <li key={entry.student_id}>
+                    {index + 1}. {entry.student_name || "Student"} -{" "}
+                    {entry.total_score} points
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </div>
