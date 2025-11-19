@@ -17,7 +17,6 @@ import Chatbot_gamified_quiz from "./components/Chatbot_gamified_quiz";
 
 
 import UsageDashboard from "./components/UsageDashboard";
-import StudentDashboard from "./components/StudentDashboard";
 
 
 
@@ -101,7 +100,7 @@ const handleLogin = async () => {
         setSessionToken(data.session_token || null);
 
         if (data?.name === "Admin") navigate("/AdminPanel");
-        else navigate("/StudentDashboard");
+        else navigate("/ChatBot");
       } else {
         setError(data.detail || "Invalid credentials");
       }
@@ -176,7 +175,7 @@ const handleLogin = async () => {
           if (verifyData.name === "Admin") { // ✅ access 'name' directly
             navigate("/AdminPanel");
           } else {
-            navigate("/StudentDashboard");
+            navigate("/ChatBot");
           }
         } else {
           console.warn("[WARN] OTP verification failed:", verifyData);
@@ -355,11 +354,7 @@ function App() {
           }
         />
 
-        {/* Sociology Chatbot */}
-        <Route
-          path="/StudentDashboard"
-          element={<StudentDashboard student={doctorData} />}
-        />
+        
         <Route
           path="/usage-dashboard"
           element={
@@ -374,14 +369,7 @@ function App() {
         />
 
 
-        <Route
-          path="/chatbot-settings"
-          element={
-            <PrivateRoute isLoggedIn={isLoggedIn}>
-              <StudentDashboard />
-            </PrivateRoute>
-          }
-        />
+        
       </Routes>
     </Router>
   );
