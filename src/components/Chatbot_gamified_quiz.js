@@ -95,7 +95,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   };
   async function getStudentName(studentId) {
     const response = await fetch(
-      `https://web-production-481a5.up.railway.app/student-name?student_id=${studentId}`
+      `https://web-production-481a5.up.railway.app/student-name?student_id=${doctorData.id}`
     );
   
     if (!response.ok) {
@@ -275,6 +275,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
 
