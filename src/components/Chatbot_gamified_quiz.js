@@ -138,7 +138,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
       setIsWaiting(false);
       return;
     }
-    const { student_name } = await getStudentName(student.id);
+    const { student_name } = await getStudentName(doctorData.id);
 
     const payload = {
       student_id: student.id,
@@ -274,6 +274,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
 
