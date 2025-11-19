@@ -8,6 +8,38 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   const [reasoningLevel, setReasoningLevel] = useState("simple");
   const [isWaiting, setIsWaiting] = useState(false);
   const chatEndRef = useRef(null);
+  const [quiz, setQuiz] = useState(null);      // Stores the quiz JSON
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+
+  useEffect(() => {
+  const fetchQuiz = async () => {
+    try {
+      const response = await fetch(
+        `https://your-backend.com/get-quiz?class_name=${encodeURIComponent(doctorData.class_name)}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch quiz");
+      const data = await response.json();
+      setQuiz(data);
+
+      if (data && data.questions && data.questions.length > 0) {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "bot", text: data.questions[0].prompt }
+        ]);
+      }
+    } catch (err) {
+      console.error("Error fetching quiz:", err);
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: "Sorry, no quiz available right now." }
+      ]);
+    }
+  };
+
+  fetchQuiz();
+}, [doctorData.class_name]);
+
+
 
    useEffect(() => {
     console.log("DEBUG: doctorData on first render:", doctorData);
@@ -215,6 +247,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
 
