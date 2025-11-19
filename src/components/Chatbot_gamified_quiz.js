@@ -106,15 +106,17 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
   try {
     const studentId = doctorData.student_id;
-    const className = doctorData.class_name.trim();
+    const className = (doctorData.class_name || "").trim();
+    const classDay = (doctorData.class_day || "").trim();  // added class_day
     const studentName = (doctorData.name || "").trim();
     const questionIndex = currentQuestionIndex;
     const selectedOption = studentAnswer;
-
+    
     const payload = {
       student_id: studentId,
       student_name: studentName,
       class_name: className,
+      class_day: classDay,  // included class_day
       question_index: questionIndex,
       selected_option: selectedOption,
     };
@@ -244,6 +246,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
 
