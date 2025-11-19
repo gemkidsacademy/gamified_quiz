@@ -3,9 +3,7 @@ import "./AddActivity.css";
 
 export default function AddActivity() {
   const [instructions, setInstructions] = useState("");
-  const [prompt, setPrompt] = useState(
-    "You are a helpful quiz generator. Use the following topics to create a student quiz: {topics}. Include instructions, questions with options, and correct answers in JSON format."
-  );
+  const [prompt, setPrompt] = useState("");
   const [scoreLogic, setScoreLogic] = useState("");
   const [className, setClassName] = useState("");
   const [classDay, setClassDay] = useState("");
@@ -78,7 +76,7 @@ export default function AddActivity() {
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Enter the quiz prompt here"
+            placeholder="You are a helpful quiz generator. Use the following topics to create a student quiz: {topics}. Include instructions, questions with options, and correct answers in JSON format."
             required
           />
           <small>The prompt will automatically be converted to the required JSON format.</small>
