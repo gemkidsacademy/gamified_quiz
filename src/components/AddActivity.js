@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import "./AddActivity.css";
+
 
 export default function AddActivity() {
   const [instructions, setInstructions] = useState("");
