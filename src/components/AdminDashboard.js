@@ -1,6 +1,9 @@
 // src/components/AdminDashboard.js
 import React, { useState } from "react";
 import "./AdminDashboard.css";
+import AddActivity from "./AddActivity";
+
+
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -42,25 +45,9 @@ export default function AdminDashboard() {
 
         {activeTab === "addActivity" && (
           <div className="tab-panel">
-            <h3>Add New Activity</h3>
-            <form className="activity-form">
-              <label>
-                Activity Name:
-                <input type="text" placeholder="Enter activity name" />
-              </label>
-              <label>
-                Description:
-                <textarea placeholder="Enter activity description" />
-              </label>
-              <label>
-                Date:
-                <input type="date" />
-              </label>
-              <button type="submit">Add Activity</button>
-            </form>
+            <AddActivity />
           </div>
         )}
-
         {activeTab === "reports" && (
           <div className="tab-panel">
             <h3>Reports</h3>
