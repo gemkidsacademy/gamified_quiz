@@ -146,7 +146,7 @@ const handleLogin = async () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           //body: JSON.stringify({ phone_number: formattedPhone, otp }), // send formatted phone
-          body: JSON.stringify({ phone_number: phone, otp }),
+          body: JSON.stringify({ phone: phone, otp }),
         });
 
         console.log("[DEBUG] Raw verify-otp response status:", verifyResponse.status);
