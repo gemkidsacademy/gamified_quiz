@@ -168,8 +168,9 @@ const handleLogin = async () => {
           setDoctorData({
             student_id: verifyData.student_id,
             phone_number: verifyData.phone_number,
-            name: verifyData.name
-          }); // ✅ map response directly
+            name: verifyData.name,
+            class_name: verifyData.class_name  // <- include class_name here
+          }) // ✅ map response directly
           setSessionToken(null);
           
           if (verifyData.name === "Admin") { // ✅ access 'name' directly
