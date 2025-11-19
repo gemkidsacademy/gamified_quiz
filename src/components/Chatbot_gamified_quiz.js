@@ -11,6 +11,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   const [quiz, setQuiz] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const chatEndRef = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   // ------------------ Auto-scroll ------------------
   useEffect(() => {
@@ -141,9 +142,9 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     const { student_name } = await getStudentName(doctorData.id);
 
     const payload = {
-      student_id: student.id,
+      student_id: doctorData.id,
       student_name,                // <-- fetched from backend
-      class_name: student.class_name,
+      class_name: doctorData.class_name,
       question_index: currentIndex,
       selected_option: selectedOption,
     };
@@ -274,6 +275,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
 
