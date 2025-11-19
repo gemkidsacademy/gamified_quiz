@@ -4,7 +4,11 @@ import "./AddActivity.css";
 
 export default function AddActivity() {
   const [instructions, setInstructions] = useState("");
-  const [questions, setQuestions] = useState('[{"prompt":""}]'); // JSON string
+  const [questions, setQuestions] = useState(`[
+    {
+      "prompt": "You are a helpful quiz generator. Use the following topics to create a student quiz: {topics}. Include instructions, questions with options, and correct answers in JSON format."
+    }
+  ]`); 
   const [scoreLogic, setScoreLogic] = useState("");
   const [className, setClassName] = useState("");
   const [classDay, setClassDay] = useState("");
