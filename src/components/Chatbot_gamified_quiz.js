@@ -104,7 +104,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
   try {
     // Validate and coerce fields
-    const studentId = Number(doctorData?.id);
+    const studentId = Number(doctorData?.student_id);
     const className = String(doctorData?.class_name || "").trim();
     const questionIndex = Number(currentQuestionIndex);
     const selectedOption = String(studentAnswer).trim();
@@ -261,5 +261,6 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
