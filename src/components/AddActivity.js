@@ -1,17 +1,17 @@
 import React, { useState } from "react";
 import "./AddActivity.css";
 
-
 export default function AddActivity() {
   const [instructions, setInstructions] = useState("");
   const [questions, setQuestions] = useState(`[
-    {
-      "prompt": "You are a helpful quiz generator. Use the following topics to create a student quiz: {topics}. Include instructions, questions with options, and correct answers in JSON format."
-    }
-  ]`); 
+  {
+    "prompt": "You are a helpful quiz generator. Use the following topics to create a student quiz: {topics}. Include instructions, questions with options, and correct answers in JSON format."
+  }
+]`);
   const [scoreLogic, setScoreLogic] = useState("");
   const [className, setClassName] = useState("");
   const [classDay, setClassDay] = useState("");
+  const [weekNumber, setWeekNumber] = useState("");
   const [message, setMessage] = useState("");
 
   const handleSubmit = async (e) => {
@@ -21,7 +21,7 @@ export default function AddActivity() {
     try {
       parsedQuestions = JSON.parse(questions);
     } catch (err) {
-      setMessage("Invalid JSON in questions field.");
+      setMessage("Invalid JSON in questions field. Please follow the example format.");
       return;
     }
 
@@ -31,6 +31,7 @@ export default function AddActivity() {
       score_logic: scoreLogic,
       class_name: className,
       class_day: classDay,
+      week_number: weekNumber
     };
 
     try {
@@ -38,9 +39,7 @@ export default function AddActivity() {
         "https://your-backend-url.com/add-activity", // replace with your backend endpoint
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         }
       );
@@ -50,11 +49,17 @@ export default function AddActivity() {
       }
 
       setMessage("Activity added successfully!");
+      // Reset form fields
       setInstructions("");
-      setQuestions('[{"prompt":""}]');
+      setQuestions(`[
+  {
+    "prompt": "You are a helpful quiz generator. Use the following topics to create a student quiz: {topics}. Include instructions, questions with options, and correct answers in JSON format."
+  }
+]`);
       setScoreLogic("");
       setClassName("");
       setClassDay("");
+      setWeekNumber("");
     } catch (err) {
       console.error(err);
       setMessage("Failed to add activity.");
@@ -80,9 +85,16 @@ export default function AddActivity() {
           <textarea
             value={questions}
             onChange={(e) => setQuestions(e.target.value)}
-            placeholder='[{"prompt": "Question 1?", "options": ["A","B"], "answer":"A"}]'
+            placeholder={`[
+  {
+    "prompt": "Question 1?",
+    "options": ["Option A","Option B","Option C"],
+    "answer": "Option A"
+  }
+]`}
             required
           />
+          <small>Enter questions as a JSON array. Follow the example format above.</small>
         </label>
 
         <label>
@@ -116,10 +128,20 @@ export default function AddActivity() {
           />
         </label>
 
+        <label>
+          Week Number:
+          <input
+            type="number"
+            value={weekNumber}
+            onChange={(e) => setWeekNumber(e.target.value)}
+            placeholder="Enter week number"
+          />
+        </label>
+
         <button type="submit">Add Activity</button>
       </form>
 
-      {message && <p>{message}</p>}
+      {message && <p className="form-message">{message}</p>}
     </div>
   );
 }
