@@ -16,7 +16,6 @@ function StudentDashboard({ student }) {
 
   useEffect(() => {
     if (activeTab === "leaderboard") {
-      // Fetch leaderboard only when the tab is active
       fetchLeaderboard();
     }
   }, [activeTab]);
@@ -87,12 +86,19 @@ function StudentDashboard({ student }) {
             )}
             {!loading && !error && leaderboard.length > 0 && (
               <ul>
-                {leaderboard.map((entry, index) => (
-                  <li key={entry.student_id}>
-                    {index + 1}. {entry.student_name || "Student"} -{" "}
-                    {entry.total_score} points
-                  </li>
-                ))}
+                {leaderboard.map((entry, index) => {
+                  // Highlight the logged-in student
+                  const isCurrentStudent = entry.student_id === student.student_id;
+                  return (
+                    <li
+                      key={entry.student_id}
+                      className={isCurrentStudent ? "current-student" : ""}
+                    >
+                      {index + 1}. {entry.student_name || "Student"} -{" "}
+                      {entry.total_score} points
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
