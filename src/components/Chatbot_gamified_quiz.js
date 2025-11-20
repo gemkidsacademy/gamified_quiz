@@ -115,7 +115,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
         student_id: doctorData.student_id,
         student_name: doctorData.name,
         class_name: selectedClass, // ✅ send selectedClass
-        class_day: doctorData.class_day || null,
+        class_day: doctorData.class_day || "", 
         question_index: currentQuestionIndex,
         selected_option: studentAnswer,
       };
@@ -252,3 +252,4 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
