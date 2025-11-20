@@ -26,7 +26,8 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
   const [isDisabled, setIsDisabled] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState(null);
@@ -36,21 +37,26 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
 
   // --- Generate OTP ---
   const generateOtp = async () => {
-  if (!phone) {
-    return setError("Please enter a phone number");
+  if (!email) {
+    setError("Please enter an email address");
+    return;
   }
 
-  const formattedPhone = phone.trim();
+  const formattedEmail = email.trim().toLowerCase();
+
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(formattedEmail)) {
+    setError("Please enter a valid email address");
+    return;
+  }
 
   try {
-    const response = await fetch(
-      "https://web-production-481a5.up.railway.app/send-otp",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone_number: formattedPhone }),
-      }
-    );
+    const response = await fetch(`${server}/send-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: formattedEmail }),
+    });
 
     const data = await response.json();
 
@@ -106,7 +112,7 @@ const handleLogin = async () => {
       }
     } 
 
-    // ---------------- OTP Login ----------------
+    // ---------------- OTP Login (Email) ----------------
     else if (loginMode === "otp") {
       console.log("[INFO] OTP login mode active");
 
@@ -115,8 +121,8 @@ const handleLogin = async () => {
         return;
       }
 
-      if (!phone) {
-        setError("Please enter phone number");
+      if (!email) {
+        setError("Please enter your email");
         return;
       }
 
@@ -125,27 +131,15 @@ const handleLogin = async () => {
         return;
       }
 
-      // --- Normalize phone number to E.164 format ---
-// let formattedPhone = phone.trim();
-// if (/^0\d{9}$/.test(formattedPhone)) {
-//   formattedPhone = "+61" + formattedPhone.slice(1);
-// }
+      const formattedEmail = email.trim().toLowerCase();
 
-// --- Validate final format ---
-// const isValidE164 = (number) => /^\+614\d{8}$/.test(number);
-// if (!isValidE164(formattedPhone)) {
-//   setError("Please enter a valid 10-digit Australian mobile number (e.g. 0412345678)");
-//   return;
-// }
-
-//      console.log("[INFO] Sending verify-otp request for phone:", formattedPhone, "OTP:", otp);
+      console.log("[INFO] Sending verify-otp request for email:", formattedEmail, "OTP:", otp);
 
       try {
         const verifyResponse = await fetch(`${server}/verify-otp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          //body: JSON.stringify({ phone_number: formattedPhone, otp }), // send formatted phone
-          body: JSON.stringify({ phone: phone, otp }),
+          body: JSON.stringify({ email: formattedEmail, otp }),
         });
 
         console.log("[DEBUG] Raw verify-otp response status:", verifyResponse.status);
@@ -160,21 +154,21 @@ const handleLogin = async () => {
           return;
         }
 
-       if (verifyResponse.ok) {
+        if (verifyResponse.ok) {
           console.log("[INFO] OTP verified successfully");
-        
+
           setIsLoggedIn(true);
           setDoctorData({
-            student_id: verifyData.student_id,
-            phone_number: verifyData.phone_number,
-            name: verifyData.name,
-            class_name: Array.isArray(verifyData.class_name)
-              ? verifyData.class_name
-              : [verifyData.class_name], // wrap single string
-          }); // ✅ map response directly
+            student_id: verifyData.user.id,
+            email: verifyData.user.email,
+            name: verifyData.user.name,
+            class_name: Array.isArray(verifyData.user.class_name)
+              ? verifyData.user.class_name
+              : [verifyData.user.class_name], // wrap single string
+          });
           setSessionToken(null);
-          
-          if (verifyData.name === "Admin") { // ✅ access 'name' directly
+
+          if (verifyData.user.name === "Admin") {
             navigate("/AdminPanel");
           } else {
             navigate("/ChatBot");
