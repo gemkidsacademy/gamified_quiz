@@ -6,7 +6,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   // ------------------ State ------------------
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [reasoningLevel, setReasoningLevel] = useState("simple");
+  const [selectedClass, setSelectedClass] = useState(""); // new
   const [isWaiting, setIsWaiting] = useState(false);
   const [quiz, setQuiz] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -23,7 +23,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
       setMessages([
         {
           sender: "bot",
-          text: `Welcome, Dr. ${doctorData.name}! Let's start your quiz.`,
+          text: `Welcome, Dr. ${doctorData.name}! Please select your class to start the quiz.`,
           links: [],
         },
       ]);
@@ -32,13 +32,12 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
   // ------------------ Fetch Quiz ------------------
   useEffect(() => {
+    if (!selectedClass) return; // wait until class is selected
+
     const fetchQuiz = async () => {
-      if (!doctorData?.class_name) return;
       try {
         const response = await fetch(
-          `https://web-production-481a5.up.railway.app/get-quiz?class_name=${encodeURIComponent(
-            doctorData.class_name
-          )}`
+          `https://web-production-481a5.up.railway.app/get-quiz?class_name=${encodeURIComponent(selectedClass)}`
         );
         if (!response.ok) throw new Error("Failed to fetch quiz");
         const data = await response.json();
@@ -61,7 +60,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     };
 
     fetchQuiz();
-  }, [doctorData?.class_name]);
+  }, [selectedClass]);
 
   // ------------------ Helpers ------------------
   const parseBoldText = (text) => {
@@ -93,79 +92,67 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     );
   };
 
-  
-
   // ------------------ Handle answer submission ------------------
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!input.trim() || !quiz) return;
+    e.preventDefault();
+    if (!input.trim() || !quiz) return;
 
-  const studentAnswer = input.trim();
-  setInput("");
-  setIsWaiting(true);
+    const studentAnswer = input.trim();
+    setInput("");
+    setIsWaiting(true);
 
-  try {
-    const studentId = doctorData.student_id;
-    const className = (doctorData.class_name || "").trim();
-    const classDay = (doctorData.class_day || "").trim();  // added class_day
-    const studentName = (doctorData.name || "").trim();
-    const questionIndex = currentQuestionIndex;
-    const selectedOption = studentAnswer;
-    
-    const payload = {
-      student_id: studentId,
-      student_name: studentName,
-      class_name: className,
-      class_day: classDay,  // included class_day
-      question_index: questionIndex,
-      selected_option: selectedOption,
-    };
+    try {
+      const payload = {
+        student_id: doctorData.id,
+        student_name: doctorData.name,
+        class_name: selectedClass,
+        question_index: currentQuestionIndex,
+        selected_option: studentAnswer,
+      };
 
-    console.log("Submitting payload:", payload);
+      console.log("Submitting payload:", payload);
 
-    const response = await fetch(
-      "https://web-production-481a5.up.railway.app/submit-quiz-answer",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }
-    );
-
-    if (!response.ok) throw new Error(`Backend error: ${response.status}`);
-    const data = await response.json();
-
-    // Add user's answer to chat
-    setMessages((prev) => [...prev, { sender: "user", text: studentAnswer }]);
-
-    // Show next question or completion
-    const nextIndex = currentQuestionIndex + 1;
-    if (quiz.questions[nextIndex]) {
-      setMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: quiz.questions[nextIndex].prompt },
-      ]);
-      setCurrentQuestionIndex(nextIndex);
-    } else {
-      setMessages((prev) => [
-        ...prev,
+      const response = await fetch(
+        "https://web-production-481a5.up.railway.app/submit-quiz-answer",
         {
-          sender: "bot",
-          text: `Quiz completed! Your score: ${data.current_score}/${quiz.questions.length}`,
-        },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) throw new Error(`Backend error: ${response.status}`);
+      const data = await response.json();
+
+      setMessages((prev) => [...prev, { sender: "user", text: studentAnswer }]);
+
+      const nextIndex = currentQuestionIndex + 1;
+      if (quiz.questions[nextIndex]) {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "bot", text: quiz.questions[nextIndex].prompt },
+        ]);
+        setCurrentQuestionIndex(nextIndex);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: `Quiz completed! Your score: ${data.current_score}/${quiz.questions.length}`,
+          },
+        ]);
+        setCurrentQuestionIndex(null);
+      }
+    } catch (err) {
+      console.error("Error submitting answer:", err);
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: "Sorry, there was a problem recording your answer." },
       ]);
-      setCurrentQuestionIndex(null);
+    } finally {
+      setIsWaiting(false);
     }
-  } catch (err) {
-    console.error("Error submitting answer:", err);
-    setMessages((prev) => [
-      ...prev,
-      { sender: "bot", text: "Sorry, there was a problem recording your answer." },
-    ]);
-  } finally {
-    setIsWaiting(false);
-  }
-};
+  };
 
   // ------------------ Redirect if no doctorData ------------------
   if (!doctorData?.name) {
@@ -177,6 +164,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     <div className="chat-container">
       <div className="chat-box">
         <div className="chat-header">Gem AI Quiz</div>
+
         <div className="chat-messages">
           {messages.map((msg, idx) => (
             <div key={idx} className={`message ${msg.sender}`}>
@@ -211,42 +199,44 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
           <div ref={chatEndRef} />
         </div>
 
+        {/* ------------------ Class Selection & Input ------------------ */}
         <form
           onSubmit={handleSubmit}
           className="chat-input"
           style={{ display: "flex", gap: "8px", alignItems: "center" }}
         >
-          <input
-            type="text"
-            placeholder="Type your answer..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            style={{ flex: 1, padding: "8px" }}
-          />
-          <div className="reasoning-container">
-            <label htmlFor="reasoning-select" className="reasoning-label">
-              Reasoning
-            </label>
-            <select
-              id="reasoning-select"
-              value={reasoningLevel}
-              onChange={(e) => setReasoningLevel(e.target.value)}
-              className="reasoning-select"
-            >
-              <option value="simple">Simple</option>
-              <option value="medium">Medium</option>
-              <option value="advanced">Advanced</option>
-            </select>
-          </div>
-          <button type="submit" style={{ padding: "8px 16px" }}>
-            Submit
-          </button>
+          {!selectedClass && doctorData?.class_name?.length > 0 ? (
+            <>
+              <label htmlFor="class-select">Class Name:</label>
+              <select
+                id="class-select"
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+              >
+                <option value="">-- Select class --</option>
+                {doctorData.class_name.map((cls) => (
+                  <option key={cls} value={cls}>
+                    {cls}
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : (
+            <>
+              <input
+                type="text"
+                placeholder="Type your answer..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                style={{ flex: 1, padding: "8px" }}
+              />
+              <button type="submit" style={{ padding: "8px 16px" }}>
+                Submit
+              </button>
+            </>
+          )}
         </form>
       </div>
     </div>
   );
 }
-
-
-
-
