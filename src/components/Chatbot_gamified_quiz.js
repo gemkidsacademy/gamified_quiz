@@ -6,7 +6,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   // ------------------ State ------------------
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [selectedClass, setSelectedClass] = useState(""); // new
+  const [selectedClass, setSelectedClass] = useState(""); // ✅ track selected class
   const [isWaiting, setIsWaiting] = useState(false);
   const [quiz, setQuiz] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -32,7 +32,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
   // ------------------ Fetch Quiz ------------------
   useEffect(() => {
-    if (!selectedClass) return; // wait until class is selected
+    if (!selectedClass) return; // ✅ wait for class selection
 
     const fetchQuiz = async () => {
       try {
@@ -60,7 +60,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     };
 
     fetchQuiz();
-  }, [selectedClass]);
+  }, [selectedClass]); // ✅ dependency updated
 
   // ------------------ Helpers ------------------
   const parseBoldText = (text) => {
@@ -94,77 +94,77 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
   // ------------------ Handle answer submission ------------------
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!input.trim() || !quiz) return;
+    e.preventDefault();
+    if (!input.trim() || !quiz) return;
 
-  // Ensure a class name is selected before starting the quiz
-  if (!selectedClassName) {
-    setMessages((prev) => [
-      ...prev,
-      { sender: "bot", text: "Please select your class before starting the quiz." },
-    ]);
-    return;
-  }
-
-  const studentAnswer = input.trim();
-  setInput("");
-  setIsWaiting(true);
-
-  try {
-    const payload = {
-      student_id: doctorData.student_id,
-      student_name: doctorData.name,
-      class_name: selectedClassName, // ✅ Send the class selected by user
-      class_day: doctorData.class_day || null, // optional
-      question_index: currentQuestionIndex,
-      selected_option: studentAnswer,
-    };
-
-    console.log("Submitting payload:", payload);
-
-    const response = await fetch(
-      "https://web-production-481a5.up.railway.app/submit-quiz-answer",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }
-    );
-
-    if (!response.ok) throw new Error(`Backend error: ${response.status}`);
-    const data = await response.json();
-
-    // Add user's answer to chat
-    setMessages((prev) => [...prev, { sender: "user", text: studentAnswer }]);
-
-    // Show next question or completion
-    const nextIndex = currentQuestionIndex + 1;
-    if (quiz.questions[nextIndex]) {
+    // ✅ use selectedClass instead of selectedClassName
+    if (!selectedClass) {
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: quiz.questions[nextIndex].prompt },
+        { sender: "bot", text: "Please select your class before starting the quiz." },
       ]);
-      setCurrentQuestionIndex(nextIndex);
-    } else {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "bot",
-          text: `Quiz completed! Your score: ${data.current_score}/${quiz.questions.length}`,
-        },
-      ]);
-      setCurrentQuestionIndex(null);
+      return;
     }
-  } catch (err) {
-    console.error("Error submitting answer:", err);
-    setMessages((prev) => [
-      ...prev,
-      { sender: "bot", text: "Sorry, there was a problem recording your answer." },
-    ]);
-  } finally {
-    setIsWaiting(false);
-  }
-};
+
+    const studentAnswer = input.trim();
+    setInput("");
+    setIsWaiting(true);
+
+    try {
+      const payload = {
+        student_id: doctorData.student_id,
+        student_name: doctorData.name,
+        class_name: selectedClass, // ✅ send selectedClass
+        class_day: doctorData.class_day || null,
+        question_index: currentQuestionIndex,
+        selected_option: studentAnswer,
+      };
+
+      console.log("Submitting payload:", payload);
+
+      const response = await fetch(
+        "https://web-production-481a5.up.railway.app/submit-quiz-answer",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) throw new Error(`Backend error: ${response.status}`);
+      const data = await response.json();
+
+      // Add user's answer to chat
+      setMessages((prev) => [...prev, { sender: "user", text: studentAnswer }]);
+
+      // Show next question or completion
+      const nextIndex = currentQuestionIndex + 1;
+      if (quiz.questions[nextIndex]) {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "bot", text: quiz.questions[nextIndex].prompt },
+        ]);
+        setCurrentQuestionIndex(nextIndex);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: `Quiz completed! Your score: ${data.current_score}/${quiz.questions.length}`,
+          },
+        ]);
+        setCurrentQuestionIndex(null);
+      }
+    } catch (err) {
+      console.error("Error submitting answer:", err);
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: "Sorry, there was a problem recording your answer." },
+      ]);
+    } finally {
+      setIsWaiting(false);
+    }
+  };
 
   // ------------------ Redirect if no doctorData ------------------
   if (!doctorData?.name) {
@@ -222,7 +222,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
               <label htmlFor="class-select">Class Name:</label>
               <select
                 id="class-select"
-                value={selectedClass}
+                value={selectedClass} // ✅ bind dropdown to selectedClass
                 onChange={(e) => setSelectedClass(e.target.value)}
               >
                 <option value="">-- Select class --</option>
@@ -252,4 +252,3 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
-
