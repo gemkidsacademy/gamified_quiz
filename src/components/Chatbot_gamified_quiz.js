@@ -112,13 +112,14 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
     try {
       const payload = {
-        student_id: doctorData.student_id,
+        student_id: Number(doctorData.student_id),
         student_name: doctorData.name,
-        class_name: selectedClass, // ✅ send selectedClass
-        class_day: doctorData.class_day || "", 
-        question_index: currentQuestionIndex,
+        class_name: selectedClass,
+        class_day: doctorData.class_day || "",
+        question_index: Number(currentQuestionIndex),
         selected_option: studentAnswer,
       };
+
 
       console.log("Submitting payload:", payload);
 
@@ -252,4 +253,5 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
