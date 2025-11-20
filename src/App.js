@@ -168,8 +168,10 @@ const handleLogin = async () => {
             student_id: verifyData.student_id,
             phone_number: verifyData.phone_number,
             name: verifyData.name,
-            class_name: verifyData.class_name  // <- include class_name here
-          }) // ✅ map response directly
+            class_name: Array.isArray(verifyData.class_name)
+              ? verifyData.class_name
+              : [verifyData.class_name], // wrap single string
+          }); // ✅ map response directly
           setSessionToken(null);
           
           if (verifyData.name === "Admin") { // ✅ access 'name' directly
