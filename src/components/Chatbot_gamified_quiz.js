@@ -32,35 +32,49 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
   // ------------------ Fetch Quiz ------------------
   useEffect(() => {
-    if (!selectedClass) return; // ✅ wait for class selection
+  if (!selectedClass) return; // wait for class selection
 
-    const fetchQuiz = async () => {
-      try {
-        const response = await fetch(
-          `https://web-production-481a5.up.railway.app/get-quiz?class_name=${encodeURIComponent(selectedClass)}`
-        );
-        if (!response.ok) throw new Error("Failed to fetch quiz");
-        const data = await response.json();
-        setQuiz(data);
+  const fetchQuiz = async () => {
+    try {
+      const response = await fetch(
+        `https://web-production-481a5.up.railway.app/get-quiz?class_name=${encodeURIComponent(
+          selectedClass
+        )}&student_id=${doctorData.student_id}`
+      );
 
-        // Show first question
-        if (data?.questions?.length > 0) {
-          setMessages((prev) => [
-            ...prev,
-            { sender: "bot", text: data.questions[0].prompt },
-          ]);
-        }
-      } catch (err) {
-        console.error("Error fetching quiz:", err);
+      if (!response.ok) throw new Error("Failed to fetch quiz");
+
+      const data = await response.json();
+
+      // Check if backend sent a "already attempted" message
+      if (data.message === "You have already attempted this week's quiz.") {
         setMessages((prev) => [
           ...prev,
-          { sender: "bot", text: "Sorry, no quiz available right now." },
+          { sender: "bot", text: data.message },
+        ]);
+        return; // stop further quiz display
+      }
+
+      setQuiz(data);
+
+      // Show first question if quiz exists
+      if (data?.questions?.length > 0) {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "bot", text: data.questions[0].prompt },
         ]);
       }
-    };
+    } catch (err) {
+      console.error("Error fetching quiz:", err);
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: "Sorry, no quiz available right now." },
+      ]);
+    }
+  };
 
-    fetchQuiz();
-  }, [selectedClass]); // ✅ dependency updated
+  fetchQuiz();
+}, [selectedClass, doctorData.student_id]);
 
   // ------------------ Helpers ------------------
   const parseBoldText = (text) => {
@@ -253,5 +267,6 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
