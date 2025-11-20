@@ -24,7 +24,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
       setMessages([
         {
           sender: "bot",
-          text: `Welcome, Dr. ${doctorData.name}! Please select your class to start the quiz.`,
+          text: `Welcome, Dr. ${doctorData.name}! Please select your class to start the quiz. ${doctorData.student_id}`,
           links: [],
         },
       ]);
@@ -36,6 +36,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   if (!selectedClass) return; // wait for class selection
 
   const fetchQuiz = async () => {
+    console.log("[DEBUG] doctorData changed:", doctorData);
     try {
       const response = await fetch(
         `https://web-production-481a5.up.railway.app/get-quiz?class_name=${encodeURIComponent(
@@ -268,6 +269,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
 
