@@ -2,11 +2,10 @@
 import React, { useState } from "react";
 import "./AdminDashboard.css";
 import AddActivity from "./AddActivity";
-
-
+import SetDate from "./SetDate"; // <-- your new component
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("setDate");
 
   return (
     <div className="admin-dashboard">
@@ -15,10 +14,10 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <div className="tab-nav">
         <div
-          className={`tab-item ${activeTab === "overview" ? "active" : ""}`}
-          onClick={() => setActiveTab("overview")}
+          className={`tab-item ${activeTab === "setDate" ? "active" : ""}`}
+          onClick={() => setActiveTab("setDate")}
         >
-          Overview
+          Set Date
         </div>
         <div
           className={`tab-item ${activeTab === "addActivity" ? "active" : ""}`}
@@ -36,10 +35,9 @@ export default function AdminDashboard() {
 
       {/* Tab Content */}
       <div className="tab-content">
-        {activeTab === "overview" && (
+        {activeTab === "setDate" && (
           <div className="tab-panel">
-            <h3>Overview</h3>
-            <p>Summary of all activities, users, and metrics.</p>
+            <SetDate />
           </div>
         )}
 
@@ -48,6 +46,7 @@ export default function AdminDashboard() {
             <AddActivity />
           </div>
         )}
+
         {activeTab === "reports" && (
           <div className="tab-panel">
             <h3>Reports</h3>
