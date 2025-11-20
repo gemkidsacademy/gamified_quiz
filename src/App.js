@@ -197,7 +197,7 @@ const handleLogin = async () => {
     setOtp("");
     setUsername("");
     setPassword("");
-    setPhone("");
+    
   };
 
   return (
@@ -226,13 +226,13 @@ const handleLogin = async () => {
           </>
         ) : (
           <>
-            <input
-              type="text"
-              placeholder="Enter phone number in the format 0412345678"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+           <input
+              type="email"
+              placeholder="Enter your email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               style={styles.input}
-              disabled={otpSent} // disable phone after OTP is sent
+              disabled={otpSent} // disable email input after OTP is sent
             />
             {!otpSent && (
               <button
