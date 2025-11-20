@@ -159,7 +159,7 @@ const handleLogin = async () => {
 
           setIsLoggedIn(true);
           setDoctorData({
-            student_id: verifyData.user.id,
+            student_id: verifyData.user.student_id,
             email: verifyData.user.email,
             name: verifyData.user.name,
             class_name: Array.isArray(verifyData.user.class_name)
