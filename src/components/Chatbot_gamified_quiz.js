@@ -19,6 +19,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
   // ------------------ Welcome message ------------------
   useEffect(() => {
+    console.log("[DEBUG] doctorData changed:", doctorData); // Log the full object
     if (doctorData?.name) {
       setMessages([
         {
@@ -267,6 +268,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
 
