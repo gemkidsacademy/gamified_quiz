@@ -238,7 +238,7 @@ const handleLogin = async () => {
               <button
                 onClick={generateOtp}
                 style={{ ...styles.button, background: "#28a745", marginTop: "5px" }}
-                disabled={!phone}
+                disabled={!email}
               >
                 Generate OTP
               </button>
