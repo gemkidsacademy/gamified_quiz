@@ -239,15 +239,18 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
               <label htmlFor="class-select">Class Name:</label>
               <select
                 id="class-select"
-                value={selectedClass} // ✅ bind dropdown to selectedClass
+                value={selectedClass}
                 onChange={(e) => setSelectedClass(e.target.value)}
               >
                 <option value="">-- Select class --</option>
-                {doctorData.class_name.map((cls) => (
-                  <option key={cls} value={cls}>
-                    {cls}
-                  </option>
-                ))}
+                {doctorData.class_name
+                  .split(",")             // split by comma
+                  .map((cls) => cls.trim()) // remove extra spaces
+                  .map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls}
+                    </option>
+                  ))}
               </select>
             </>
           ) : (
@@ -264,11 +267,14 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
               </button>
             </>
           )}
+
+            
         </form>
       </div>
     </div>
   );
 }
+
 
 
 
