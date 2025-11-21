@@ -234,7 +234,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
           className="chat-input"
           style={{ display: "flex", gap: "8px", alignItems: "center" }}
         >
-          {!selectedClass && doctorData?.class_name?.length > 0 ? (
+          {!selectedClass && doctorData?.class_name ? (
             <>
               <label htmlFor="class-select">Class Name:</label>
               <select
@@ -243,14 +243,14 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
                 onChange={(e) => setSelectedClass(e.target.value)}
               >
                 <option value="">-- Select class --</option>
-                {(Array.isArray(doctorData.class_name)
-                  ? doctorData.class_name
-                  : doctorData.class_name.split(",").map((cls) => cls.trim())
-                ).map((cls) => (
-                  <option key={cls} value={cls}>
-                    {cls}
-                  </option>
-                ))}
+                {doctorData.class_name
+                  .split(",")         // split the string by comma
+                  .map((cls) => cls.trim()) // remove extra spaces
+                  .map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls}
+                    </option>
+                  ))}
               </select>
             </>
           ) : (
@@ -269,12 +269,14 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
           )}
 
 
+
             
         </form>
       </div>
     </div>
   );
 }
+
 
 
 
