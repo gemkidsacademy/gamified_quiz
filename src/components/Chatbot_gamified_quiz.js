@@ -243,9 +243,11 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
                 onChange={(e) => setSelectedClass(e.target.value)}
               >
                 <option value="">-- Select class --</option>
-                {doctorData.class_name
-                  .split(",")           // split the string by comma
-                  .map((cls) => cls.trim()) // remove extra spaces
+                {(typeof doctorData.class_name === "string"
+                  ? doctorData.class_name.split(",")      // split string by comma
+                  : doctorData.class_name                  // already an array
+                )
+                  .map((cls) => cls.trim())                // trim whitespace
                   .map((cls) => (
                     <option key={cls} value={cls}>
                       {cls}
@@ -271,12 +273,14 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
 
 
+
             
         </form>
       </div>
     </div>
   );
 }
+
 
 
 
