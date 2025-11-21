@@ -244,7 +244,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
               >
                 <option value="">-- Select class --</option>
                 {doctorData.class_name
-                  .split(",")         // split the string by comma
+                  .split(",")           // split the string by comma
                   .map((cls) => cls.trim()) // remove extra spaces
                   .map((cls) => (
                     <option key={cls} value={cls}>
@@ -270,12 +270,14 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
 
 
+
             
         </form>
       </div>
     </div>
   );
 }
+
 
 
 
