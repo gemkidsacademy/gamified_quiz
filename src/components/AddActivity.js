@@ -66,7 +66,7 @@ export default function AddActivity() {
           <textarea
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
-            placeholder="Enter activity instructions"
+            placeholder="Enter Topic"
             required
           />
         </label>
@@ -76,7 +76,7 @@ export default function AddActivity() {
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="You are a helpful quiz generator. Use the following topics to create a student quiz: {topics}. Include instructions, questions with options, and correct answers in JSON format."
+            placeholder="Adhere strictly: Create a gamified activity for students in Year 1.The activity format should be Mini Path û choice answer.The topic taught is Science."
             required
           />
           
@@ -88,7 +88,7 @@ export default function AddActivity() {
             type="text"
             value={scoreLogic}
             onChange={(e) => setScoreLogic(e.target.value)}
-            placeholder="e.g., 1 point per correct answer"
+            placeholder="Enter activity type(adhere strictly e.g:Mini Path – choice answer "
           />
         </label>
 
@@ -119,7 +119,7 @@ export default function AddActivity() {
             type="number"
             value={weekNumber}
             onChange={(e) => setWeekNumber(e.target.value)}
-            placeholder="Enter week number"
+            placeholder="Enter the week number"
           />
         </label>
 
