@@ -60,7 +60,7 @@ export default function AddActivity() {
       <h3>Add New Activity</h3>
       <form onSubmit={handleSubmit}>
         <label>
-          Instructions:
+          Topic Name:
           <textarea
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
@@ -80,7 +80,7 @@ export default function AddActivity() {
         </label>
 
         <label>
-          Score Logic:
+          Activity Type:
           <input
             type="text"
             value={scoreLogic}
