@@ -64,7 +64,7 @@ export default function AddActivity() {
           <textarea
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
-            placeholder="Enter activity instructions"
+            placeholder="Enter Topic. e.g Telling Time "
             required
           />
         </label>
@@ -85,7 +85,7 @@ export default function AddActivity() {
             type="text"
             value={scoreLogic}
             onChange={(e) => setScoreLogic(e.target.value)}
-            placeholder="e.g., 1 point per correct answer"
+            placeholder="enter activity type. e.g Mini Path – choice answer"
           />
         </label>
 
