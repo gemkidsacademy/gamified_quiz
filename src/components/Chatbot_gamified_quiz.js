@@ -229,10 +229,11 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
         </div>
 
         {/* ------------------ Class Selection & Input ------------------ */}
+        {/* ------------------ Class Selection & Input ------------------ */}
         <form
           onSubmit={handleSubmit}
           className="chat-input"
-          style={{ display: "flex", gap: "8px", alignItems: "center" }}
+          style={{ display: "flex", flexDirection: "column", gap: "8px" }}
         >
           {!selectedClass && doctorData?.class_name ? (
             <>
@@ -255,26 +256,34 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
             </>
           ) : (
             <>
-              <input
-                type="text"
-                placeholder="Type your answer..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                style={{ flex: 1, padding: "8px" }}
-              />
-              <button type="submit" style={{ padding: "8px 16px" }}>
-                Submit
-              </button>
+              {/* Show message when quiz is completed */}
+              {currentQuestionIndex === null && (
+                <div style={{ color: "red", marginBottom: "4px" }}>
+                  Quiz completed – input disabled
+                </div>
+              )}
+        
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <input
+                  type="text"
+                  placeholder="Type your answer..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  style={{ flex: 1, padding: "8px" }}
+                  disabled={currentQuestionIndex === null} // disable after quiz ends
+                />
+                <button
+                  type="submit"
+                  style={{ padding: "8px 16px" }}
+                  disabled={currentQuestionIndex === null} // disable after quiz ends
+                >
+                  Submit
+                </button>
+              </div>
             </>
           )}
-
-
-
-
-
-
-            
         </form>
+
       </div>
     </div>
   );
