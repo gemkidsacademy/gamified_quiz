@@ -108,80 +108,93 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     );
   };
 
+  const handleAnswerSelection = async (selectedOption) => {
+    // Optionally show the selected answer in chat input
+    setInput(selectedOption);
+    
+    // Reuse your existing handleSubmit logic
+    await handleSubmit({ preventDefault: () => {} }, selectedOption);
+    };
+
   // ------------------ Handle answer submission ------------------
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim() || !quiz) return;
+  const handleSubmit = async (e, selectedOption = null) => {
+  // Prevent default form submission if event exists
+  if (e) e.preventDefault();
 
-    // ✅ use selectedClass instead of selectedClassName
-    if (!selectedClass) {
-      setMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: "Please select your class before starting the quiz." },
-      ]);
-      return;
-    }
+  // Determine the answer: either from input or selected option
+  const studentAnswer = selectedOption || input.trim();
 
-    const studentAnswer = input.trim();
-    setInput("");
-    setIsWaiting(true);
+  // If no answer or quiz not loaded, do nothing
+  if (!studentAnswer || !quiz) return;
 
-    try {
-      const payload = {
-        student_id: Number(doctorData.student_id),
-        student_name: doctorData.name,
-        class_name: selectedClass,
-        class_day: doctorData.class_day || "",
-        question_index: Number(currentQuestionIndex),
-        selected_option: studentAnswer,
-      };
+  // Ensure class is selected
+  if (!selectedClass) {
+    setMessages((prev) => [
+      ...prev,
+      { sender: "bot", text: "Please select your class before starting the quiz." },
+    ]);
+    return;
+  }
 
+  // Clear input and show waiting state
+  setInput("");
+  setIsWaiting(true);
 
-      console.log("Submitting payload:", payload);
+  try {
+    const payload = {
+      student_id: Number(doctorData.student_id),
+      student_name: doctorData.name,
+      class_name: selectedClass,
+      class_day: doctorData.class_day || "",
+      question_index: Number(currentQuestionIndex),
+      selected_option: studentAnswer,
+    };
 
-      const response = await fetch(
-        "https://web-production-481a5.up.railway.app/submit-quiz-answer",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+    console.log("Submitting payload:", payload);
 
-      if (!response.ok) throw new Error(`Backend error: ${response.status}`);
-      const data = await response.json();
-
-      // Add user's answer to chat
-      setMessages((prev) => [...prev, { sender: "user", text: studentAnswer }]);
-
-      // Show next question or completion
-      const nextIndex = currentQuestionIndex + 1;
-      if (quiz.questions[nextIndex]) {
-        setMessages((prev) => [
-          ...prev,
-          { sender: "bot", text: quiz.questions[nextIndex].prompt },
-        ]);
-        setCurrentQuestionIndex(nextIndex);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: "bot",
-            text: `Quiz completed! Your score: ${data.current_score}/${quiz.questions.length}`,
-          },
-        ]);
-        setCurrentQuestionIndex(null);
+    const response = await fetch(
+      "https://web-production-481a5.up.railway.app/submit-quiz-answer",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       }
-    } catch (err) {
-      console.error("Error submitting answer:", err);
+    );
+
+    if (!response.ok) throw new Error(`Backend error: ${response.status}`);
+    const data = await response.json();
+
+    // Show user's answer in chat
+    setMessages((prev) => [...prev, { sender: "user", text: studentAnswer }]);
+
+    // Move to next question or finish quiz
+    const nextIndex = currentQuestionIndex + 1;
+    if (quiz.questions[nextIndex]) {
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: "Sorry, there was a problem recording your answer." },
+        { sender: "bot", text: quiz.questions[nextIndex].prompt },
       ]);
-    } finally {
-      setIsWaiting(false);
+      setCurrentQuestionIndex(nextIndex);
+    } else {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: `Quiz completed! Your score: ${data.current_score}/${quiz.questions.length}`,
+        },
+      ]);
+      setCurrentQuestionIndex(null); // disable further input
     }
-  };
+  } catch (err) {
+    console.error("Error submitting answer:", err);
+    setMessages((prev) => [
+      ...prev,
+      { sender: "bot", text: "Sorry, there was a problem recording your answer." },
+    ]);
+  } finally {
+    setIsWaiting(false);
+  }
+};
 
   // ------------------ Redirect if no doctorData ------------------
   if (!doctorData?.name) {
@@ -230,59 +243,85 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
         {/* ------------------ Class Selection & Input ------------------ */}
         {/* ------------------ Class Selection & Input ------------------ */}
+        {/* ------------------ Class Selection & Quiz Input ------------------ */}
         <form
-          onSubmit={handleSubmit}
-          className="chat-input"
-          style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+        onSubmit={handleSubmit}
+        className="chat-input"
+        style={{ display: "flex", flexDirection: "column", gap: "8px" }}
         >
-          {!selectedClass && doctorData?.class_name ? (
+        {/* Class selection before starting the quiz */}
+        {!selectedClass && doctorData?.class_name ? (
             <>
-              <label htmlFor="class-select">Class Name:</label>
-              <select
+            <label htmlFor="class-select">Class Name:</label>
+            <select
                 id="class-select"
                 value={selectedClass}
                 onChange={(e) => setSelectedClass(e.target.value)}
-              >
+            >
                 <option value="">-- Select class --</option>
-                {[].concat(doctorData.class_name) // ensures we have an array
-                  .flatMap(cn => cn.split(","))   // split any comma-separated strings
-                  .map(cls => cls.trim())          // trim whitespace
-                  .map(cls => (
+                {[].concat(doctorData.class_name) // ensure array
+                .flatMap(cn => cn.split(","))   // split comma-separated strings
+                .map(cls => cls.trim())          // trim whitespace
+                .map(cls => (
                     <option key={cls} value={cls}>
-                      {cls}
+                    {cls}
                     </option>
-                  ))}
-              </select>
+                ))}
+            </select>
             </>
-          ) : (
+        ) : (
             <>
-              {/* Show message when quiz is completed */}
-              {currentQuestionIndex === null && (
+            {/* Quiz completed message */}
+            {currentQuestionIndex === null && (
                 <div style={{ color: "red", marginBottom: "4px" }}>
-                  Quiz completed – input disabled
+                Quiz completed – input disabled
                 </div>
-              )}
-        
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            )}
+
+            {/* Show options buttons if they exist */}
+            {currentQuestionIndex !== null &&
+            quiz?.questions[currentQuestionIndex]?.options ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {quiz.questions[currentQuestionIndex].options.map((opt, idx) => (
+                    <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleAnswerSelection(opt)}
+                    disabled={isWaiting || currentQuestionIndex === null}
+                    style={{
+                        padding: "8px 16px",
+                        textAlign: "left",
+                        cursor: isWaiting ? "not-allowed" : "pointer",
+                    }}
+                    >
+                    {opt}
+                    </button>
+                ))}
+                </div>
+            ) : (
+                /* Fallback text input if no options */
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <input
-                  type="text"
-                  placeholder="Type your answer..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  style={{ flex: 1, padding: "8px" }}
-                  disabled={currentQuestionIndex === null} // disable after quiz ends
+                    type="text"
+                    placeholder="Type your answer..."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    style={{ flex: 1, padding: "8px" }}
+                    disabled={currentQuestionIndex === null || isWaiting}
                 />
                 <button
-                  type="submit"
-                  style={{ padding: "8px 16px" }}
-                  disabled={currentQuestionIndex === null} // disable after quiz ends
+                    type="submit"
+                    style={{ padding: "8px 16px" }}
+                    disabled={currentQuestionIndex === null || isWaiting}
                 >
-                  Submit
+                    Submit
                 </button>
-              </div>
+                </div>
+            )}
             </>
-          )}
+        )}
         </form>
+
 
       </div>
     </div>
