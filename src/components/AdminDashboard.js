@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import "./AdminDashboard.css";
 import AddActivity from "./AddActivity";
 import SetDate from "./SetDate"; // <-- your new component
-import TermDatesTable from "./TermDatesTable"; // <-- your new component
+import TermDatesTable from "./TermDatesTable";
+import AddBulkActivity from "./AddBulkActivity";// <-- your new component
 
 
 export default function AdminDashboard() {
@@ -28,6 +29,12 @@ export default function AdminDashboard() {
           Add Activity
         </div>
         <div
+          className={`tab-item ${activeTab === "addbulkactivity" ? "active" : ""}`}
+          onClick={() => setActiveTab("addbulkactivity")}
+        >
+          Add Bulk Activity
+        </div>
+        <div
           className={`tab-item ${activeTab === "term-dates" ? "active" : ""}`}
           onClick={() => setActiveTab("term-dates")}
         >
@@ -43,9 +50,9 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === "addActivity" && (
+        {activeTab === "addbulkactivity" && (
           <div className="tab-panel">
-            <AddActivity />
+            <AddBulkActivity />
           </div>
         )}
 
