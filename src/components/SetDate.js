@@ -1,14 +1,16 @@
-// src/components/SetDate.js
+// src/components/SetTerm.js
 import React, { useState, useEffect } from "react";
 
-export default function SetDate() {
-  const [selectedDate, setSelectedDate] = useState("");
+export default function SetTerm() {
+  const [year, setYear] = useState("");
+  const [termStartDate, setTermStartDate] = useState("");
+  const [termEndDate, setTermEndDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Fetch term start date on component mount
-    const fetchTermStartDate = async () => {
+    // Fetch current term data on mount
+    const fetchTermData = async () => {
       setLoading(true);
       setError("");
 
@@ -18,7 +20,6 @@ export default function SetDate() {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            // no body needed
           }
         );
 
@@ -27,60 +28,97 @@ export default function SetDate() {
         }
 
         const data = await response.json();
-        if (data.date) {
-          setSelectedDate(data.date);
-        } else {
-          setError("Date not returned from backend");
-        }
+        if (data.year) setYear(data.year);
+        if (data.termStartDate) setTermStartDate(data.termStartDate);
+        if (data.termEndDate) setTermEndDate(data.termEndDate);
       } catch (err) {
-        console.error("Error fetching term start date:", err);
-        setError("Failed to retrieve term start date. Please try again.");
+        console.error("Error fetching term data:", err);
+        setError("Failed to retrieve term data. Please try again.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTermStartDate();
+    fetchTermData();
   }, []);
 
-  const handleDateChange = (e) => {
-    setSelectedDate(e.target.value);
-  };
-
-  const handleSubmit = () => {
-    if (!selectedDate) {
-      setError("Please select a date first");
+  const handleSubmit = async () => {
+    if (!year || !termStartDate || !termEndDate) {
+      setError("Please fill in all fields");
       return;
     }
 
     setError("");
-    // You can handle additional logic on submit if needed
-    console.log("Selected date submitted:", selectedDate);
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        "https://web-production-481a5.up.railway.app/set-term-data",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            year,
+            termStartDate,
+            termEndDate,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Backend returned status ${response.status}`);
+      }
+
+      console.log("Term data submitted:", { year, termStartDate, termEndDate });
+      alert("Term data updated successfully!");
+    } catch (err) {
+      console.error("Error submitting term data:", err);
+      setError("Failed to submit term data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="set-date-container">
-      <h3>Set Date</h3>
+    <div className="set-term-container">
+      <h3>Set Term Details</h3>
+
       <div style={{ marginBottom: "12px" }}>
-        <label htmlFor="date-picker">Select a date: </label>
+        <label htmlFor="year">Year: </label>
         <input
-          type="date"
-          id="date-picker"
-          value={selectedDate}
-          onChange={handleDateChange}
+          type="number"
+          id="year"
+          value={year}
+          onChange={(e) => setYear(e.target.value)}
+          placeholder="e.g., 2025"
         />
       </div>
-      <button onClick={handleSubmit} disabled={loading || !selectedDate}>
-        {loading ? "Loading..." : "Submit"}
+
+      <div style={{ marginBottom: "12px" }}>
+        <label htmlFor="term-start">Term Start Date: </label>
+        <input
+          type="date"
+          id="term-start"
+          value={termStartDate}
+          onChange={(e) => setTermStartDate(e.target.value)}
+        />
+      </div>
+
+      <div style={{ marginBottom: "12px" }}>
+        <label htmlFor="term-end">Term End Date: </label>
+        <input
+          type="date"
+          id="term-end"
+          value={termEndDate}
+          onChange={(e) => setTermEndDate(e.target.value)}
+        />
+      </div>
+
+      <button onClick={handleSubmit} disabled={loading}>
+        {loading ? "Saving..." : "Submit"}
       </button>
 
       {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
-
-      {selectedDate && (
-        <p style={{ marginTop: "10px" }}>
-          Selected date: <strong>{selectedDate}</strong>
-        </p>
-      )}
     </div>
   );
 }
