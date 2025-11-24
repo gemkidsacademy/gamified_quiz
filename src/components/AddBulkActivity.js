@@ -14,31 +14,33 @@ export default function AddBulkActivity() {
 
   // Upload Excel to backend
   const handleUpload = async () => {
-    if (!file) {
-      setMessage("Please select an Excel file first.");
-      return;
-    }
+  if (!file) {
+    setMessage("Please select a CSV file first.");
+    return;
+  }
 
-    const formData = new FormData();
-    formData.append("file", file);
+  const formData = new FormData();
+  formData.append("file", file);
 
-    try {
-      setUploading(true);
-      setMessage("");
-      const response = await axios.post(
-        "https://web-production-481a5.up.railway.app/add-activities-from-excel",
-        formData
-      );
+  try {
+    setUploading(true);
+    setMessage("");
 
+    // POST to the new CSV endpoint
+    const response = await axios.post(
+      "https://web-production-481a5.up.railway.app/add-activities-from-csv",
+      formData
+    );
 
-      setMessage(`${response.data.message}`);
-    } catch (err) {
-      console.error(err);
-      setMessage("Failed to upload activities. Please try again.");
-    } finally {
-      setUploading(false);
-    }
-  };
+    setMessage(`${response.data.message}`);
+  } catch (err) {
+    console.error(err);
+    setMessage("Failed to upload activities. Please try again.");
+  } finally {
+    setUploading(false);
+  }
+};
+
 
   return (
     <div className="bulk-activity-container">
