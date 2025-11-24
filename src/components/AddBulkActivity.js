@@ -22,11 +22,12 @@ export default function AddBulkActivity() {
   const formData = new FormData();
   formData.append("file", file);
 
+  console.log("Uploading file:", file.name, file.type, file.size);
+
   try {
     setUploading(true);
     setMessage("");
 
-    // POST to the new CSV endpoint
     const response = await axios.post(
       "https://web-production-481a5.up.railway.app/add-activities-from-csv",
       formData
@@ -34,8 +35,12 @@ export default function AddBulkActivity() {
 
     setMessage(`${response.data.message}`);
   } catch (err) {
-    console.error(err);
-    setMessage("Failed to upload activities. Please try again.");
+    console.error("Upload error:", err);
+    if (err.response && err.response.data && err.response.data.detail) {
+      setMessage(`Failed: ${err.response.data.detail}`);
+    } else {
+      setMessage("Failed to upload activities. Please try again.");
+    }
   } finally {
     setUploading(false);
   }
