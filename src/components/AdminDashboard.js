@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import "./AdminDashboard.css";
 import AddActivity from "./AddActivity";
 import SetDate from "./SetDate"; // <-- your new component
+import TermDatesTable from "./TermDatesTable"; // <-- your new component
+
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("setDate");
