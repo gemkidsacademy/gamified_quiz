@@ -29,7 +29,7 @@ export default function AdminDashboard() {
           className={`tab-item ${activeTab === "reports" ? "active" : ""}`}
           onClick={() => setActiveTab("reports")}
         >
-          Reports
+          View Term Dates
         </div>
       </div>
 
@@ -47,10 +47,10 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === "reports" && (
+        {activeTab === "term-dates" && (
           <div className="tab-panel">
-            <h3>Reports</h3>
-            <p>View detailed activity reports and analytics.</p>
+            <h3>Term Dates</h3>
+            <TermDatesTable />
           </div>
         )}
       </div>
