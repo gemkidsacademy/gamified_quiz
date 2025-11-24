@@ -25,7 +25,7 @@ export default function AddBulkActivity() {
     try {
       setUploading(true);
       setMessage("");
-      const response = await axios.post("/add-activities-from-excel", formData, {
+      const response = await axios.post("https://web-production-481a5.up.railway.app/add-activities-from-excel", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
