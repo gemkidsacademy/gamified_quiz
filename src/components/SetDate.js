@@ -55,15 +55,39 @@ export default function SetDate() {
     setSelectedDate(e.target.value);
   };
 
-  const handleSubmit = () => {
-    if (!selectedDate) {
-      setError("Please select a date first");
-      return;
+  const handleSubmit = async () => {
+  if (!selectedDate) {
+    setError("Please select a date first");
+    return;
+  }
+
+  setError("");
+  setLoading(true);
+
+  try {
+    const response = await fetch(
+      "https://web-production-481a5.up.railway.app/set-term-start-date",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: selectedDate }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Backend returned status ${response.status}`);
     }
 
-    setError("");
-    console.log("Selected date submitted:", selectedDate);
-  };
+    const data = await response.json();
+    console.log("Term start date successfully set:", data);
+    alert("Term start date updated successfully!");
+  } catch (err) {
+    console.error("Error setting term start date:", err);
+    setError("Failed to set term start date. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // New term handlers
   const handleTermSubmit = async () => {
