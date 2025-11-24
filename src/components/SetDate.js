@@ -1,11 +1,46 @@
 // src/components/SetDate.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function SetDate() {
   const [selectedDate, setSelectedDate] = useState("");
   const [weekNumber, setWeekNumber] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    // Fetch date and week number on component mount
+    const fetchWeekNumber = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const response = await fetch(
+          "https://web-production-481a5.up.railway.app/retrieve-term-start-date",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            // no body needed
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Backend returned status ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.date) setSelectedDate(data.date);
+        if (data.week_number !== undefined) setWeekNumber(data.week_number);
+        else setError("Week number not returned from backend");
+      } catch (err) {
+        console.error("Error fetching week number:", err);
+        setError("Failed to retrieve week number. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWeekNumber();
+  }, []);
 
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
@@ -21,11 +56,14 @@ export default function SetDate() {
     setLoading(true);
 
     try {
-      const response = await fetch("https://web-production-481a5.up.railway.app/retrieve-week-number", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: selectedDate }),
-      });
+      const response = await fetch(
+        "https://web-production-481a5.up.railway.app/retrieve-week-number",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date: selectedDate }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Backend returned status ${response.status}`);
@@ -63,7 +101,7 @@ export default function SetDate() {
 
       {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
 
-      {weekNumber !== null && (
+      {weekNumber !== null && selectedDate && (
         <p style={{ marginTop: "10px" }}>
           Week number for {selectedDate}: <strong>{weekNumber}</strong>
         </p>
