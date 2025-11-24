@@ -28,8 +28,8 @@ export default function AdminDashboard() {
           Add Activity
         </div>
         <div
-          className={`tab-item ${activeTab === "reports" ? "active" : ""}`}
-          onClick={() => setActiveTab("reports")}
+          className={`tab-item ${activeTab === "term-dates" ? "active" : ""}`}
+          onClick={() => setActiveTab("term-dates")}
         >
           View Term Dates
         </div>
