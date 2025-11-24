@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import "./TermDatesTable.css";
 
 export default function TermDatesTable() {
   const [terms, setTerms] = useState([]);
