@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import "./AddBulkActivity.css";
 
 export default function AddBulkActivity() {
   const [file, setFile] = useState(null);
