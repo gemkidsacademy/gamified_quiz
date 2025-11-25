@@ -57,7 +57,7 @@ export default function AddBulkActivity() {
         disabled={uploading}
       />
       <button onClick={handleUpload} disabled={uploading}>
-        {uploading ? "Uploading..." : "Upload Excel"}
+        {uploading ? "Uploading..." : "Upload CSV"}
       </button>
 
       {message && <p>{message}</p>}
