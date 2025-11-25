@@ -267,11 +267,7 @@ const handleLogin = async () => {
         </button>
 
 
-        // <p style={styles.toggle} onClick={toggleLoginMode}>
-        //   {loginMode === "password"
-        //     ? "Login with OTP instead"
-        //     : "Login with ID/Password instead"}
-        // </p>
+       
 
 
         {error && <p style={styles.error}>{error}</p>}
