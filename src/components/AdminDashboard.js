@@ -55,6 +55,11 @@ export default function AdminDashboard() {
             <AddBulkActivity />
           </div>
         )}
+        {activeTab === "addActivity" && (
+          <div className="tab-panel">
+            <AddActivity />
+          </div>
+        )}
 
         {activeTab === "term-dates" && (
           <div className="tab-panel">
