@@ -286,7 +286,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
                     <button
                     key={idx}
                     type="button"
-                    onClick={() => handleAnswerSelection(opt)}
+                    onClick={() => handleAnswerSelection(opt.split(":")[0])}
                     disabled={isWaiting || currentQuestionIndex === null}
                     style={{
                         padding: "8px 16px",
@@ -327,6 +327,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
 
