@@ -219,116 +219,103 @@ const handleLogin = async () => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.loginBox}>
-        <h2>
-          {loginMode === "password" ? "Login with ID/Password" : "Login with OTP"}
-        </h2>
+  <div style={styles.container}>
+    <div style={styles.loginBox}>
+      <h2>
+        {loginMode === "password" ? "Login with ID/Password" : "Login with OTP"}
+      </h2>
 
-        {loginMode === "password" ? (
-          <>
+      {loginMode === "password" ? (
+        <>
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            style={styles.input}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={styles.input}
+          />
+          <button
+            onClick={handleLogin}
+            style={{ ...styles.button, opacity: 1, cursor: "pointer" }}
+          >
+            Login
+          </button>
+        </>
+      ) : (
+        <>
+          <input
+            type="email"
+            placeholder="Enter your email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={styles.input}
+            disabled={otpSent} // disable email input after OTP is sent
+          />
+
+          {!otpSent && (
+            <button
+              onClick={() => {
+                generateOtp();
+                setTimer(300); // 5 minutes
+              }}
+              style={{ ...styles.button, background: "#28a745", marginTop: "5px" }}
+              disabled={!email}
+            >
+              Generate OTP
+            </button>
+          )}
+
+          {otpSent && timer === 0 && (
+            <button
+              onClick={() => {
+                generateOtp();
+                setTimer(300); // restart 5-minute timer
+              }}
+              style={{ ...styles.button, background: "#ffc107", marginTop: "5px" }}
+            >
+              Resend OTP
+            </button>
+          )}
+
+          {otpSent && (
             <input
               type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter OTP"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
               style={styles.input}
             />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={styles.input}
-            />
-          </>
-        ) : (
-          <>
-            <input
-              type="email"
-              placeholder="Enter your email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={styles.input}
-              disabled={otpSent} // disable email input after OTP is sent
-            />
-          
-            {!otpSent && (
-              <button
-                onClick={() => {
-                  generateOtp();
-                  setTimer(300); // start 60-second timer
-                }}
-                style={{ ...styles.button, background: "#28a745", marginTop: "5px" }}
-                disabled={!email}
-              >
-                Generate OTP
-              </button>
-            )}
-          
-            {otpSent && timer === 0 && (
-              <button
-                onClick={() => {
-                  generateOtp();
-                  setTimer(300); // restart timer
-                }}
-                style={{ ...styles.button, background: "#ffc107", marginTop: "5px" }}
-              >
-                Resend OTP
-              </button>
-            )}
-          
-            {otpSent && (
-              <input
-                type="text"
-                placeholder="Enter OTP"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                style={styles.input}
-              />
-            )}
-          
-            {/* Move the countdown message below the login button */}
-            <button
-              onClick={handleLogin}
-              style={{
-                ...styles.button,
-                opacity: 1,
-                cursor: "pointer",
-              }}
-            >
-              Login
-            </button>
-          
-            {otpSent && timer > 0 && (
-              <p style={{ marginTop: "10px", textAlign: "center" }}>
-                Please enter the OTP sent to your email. Resend available in {timer}s
-              </p>
-            )}
-          </>
+          )}
 
-        )}
+          <button
+            onClick={handleLogin}
+            style={{ ...styles.button, opacity: 1, cursor: "pointer", marginTop: "10px" }}
+          >
+            Login
+          </button>
 
-         <button
-          onClick={handleLogin}
-          style={{
-            ...styles.button,
-            opacity: 1,
-            cursor: "pointer",
-          }}
-        >
-          Login
-        </button>
+          {otpSent && timer > 0 && (
+            <p style={{ marginTop: "10px", textAlign: "center" }}>
+              Please enter the OTP sent to your email. Resend available in{" "}
+              {Math.floor(timer / 60).toString().padStart(2, "0")}:
+              {(timer % 60).toString().padStart(2, "0")}
+            </p>
+          )}
+        </>
+      )}
 
-
-       
-
-
-        {error && <p style={styles.error}>{error}</p>}
-      </div>
+      {error && <p style={styles.error}>{error}</p>}
     </div>
-  );
-}
+  </div>
+);
+
 
 // --- Private Route Wrapper ---
 const PrivateRoute = ({ isLoggedIn, children }) => {
