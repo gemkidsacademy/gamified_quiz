@@ -257,7 +257,7 @@ const handleLogin = async () => {
               <button
                 onClick={() => {
                   generateOtp();
-                  setTimer(60); // start 60-second timer on OTP generation
+                  setTimer(300); // start 60-second timer
                 }}
                 style={{ ...styles.button, background: "#28a745", marginTop: "5px" }}
                 disabled={!email}
@@ -266,17 +266,11 @@ const handleLogin = async () => {
               </button>
             )}
           
-            {otpSent && timer > 0 && (
-              <p style={{ marginTop: "10px" }}>
-                Please enter the OTP sent to your email. Resend available in {timer}s
-              </p>
-            )}
-          
             {otpSent && timer === 0 && (
               <button
                 onClick={() => {
                   generateOtp();
-                  setTimer(60); // restart timer
+                  setTimer(300); // restart timer
                 }}
                 style={{ ...styles.button, background: "#ffc107", marginTop: "5px" }}
               >
@@ -292,6 +286,24 @@ const handleLogin = async () => {
                 onChange={(e) => setOtp(e.target.value)}
                 style={styles.input}
               />
+            )}
+          
+            {/* Move the countdown message below the login button */}
+            <button
+              onClick={handleLogin}
+              style={{
+                ...styles.button,
+                opacity: 1,
+                cursor: "pointer",
+              }}
+            >
+              Login
+            </button>
+          
+            {otpSent && timer > 0 && (
+              <p style={{ marginTop: "10px", textAlign: "center" }}>
+                Please enter the OTP sent to your email. Resend available in {timer}s
+              </p>
             )}
           </>
 
