@@ -27,6 +27,8 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
+  const [timer, setTimer] = useState(0); // countdown in seconds
+
 
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -34,6 +36,22 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
   const navigate = useNavigate();
   const server = "https://web-production-481a5.up.railway.app";
 
+
+
+  // Start OTP timer when otpSent becomes true
+useEffect(() => {
+  let interval = null;
+  if (otpSent && timer > 0) {
+    interval = setInterval(() => {
+      setTimer(prev => prev - 1);
+    }, 1000);
+  } else if (timer === 0) {
+    clearInterval(interval);
+  }
+  return () => clearInterval(interval);
+}, [otpSent, timer]);
+
+  
 
   // --- Generate OTP ---
   const generateOtp = async () => {
@@ -226,7 +244,7 @@ const handleLogin = async () => {
           </>
         ) : (
           <>
-           <input
+            <input
               type="email"
               placeholder="Enter your email address"
               value={email}
@@ -234,15 +252,38 @@ const handleLogin = async () => {
               style={styles.input}
               disabled={otpSent} // disable email input after OTP is sent
             />
+          
             {!otpSent && (
               <button
-                onClick={generateOtp}
+                onClick={() => {
+                  generateOtp();
+                  setTimer(60); // start 60-second timer on OTP generation
+                }}
                 style={{ ...styles.button, background: "#28a745", marginTop: "5px" }}
                 disabled={!email}
               >
                 Generate OTP
               </button>
             )}
+          
+            {otpSent && timer > 0 && (
+              <p style={{ marginTop: "10px" }}>
+                Please enter the OTP sent to your email. Resend available in {timer}s
+              </p>
+            )}
+          
+            {otpSent && timer === 0 && (
+              <button
+                onClick={() => {
+                  generateOtp();
+                  setTimer(60); // restart timer
+                }}
+                style={{ ...styles.button, background: "#ffc107", marginTop: "5px" }}
+              >
+                Resend OTP
+              </button>
+            )}
+          
             {otpSent && (
               <input
                 type="text"
@@ -253,6 +294,7 @@ const handleLogin = async () => {
               />
             )}
           </>
+
         )}
 
          <button
