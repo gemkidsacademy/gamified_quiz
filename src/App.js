@@ -315,6 +315,7 @@ const handleLogin = async () => {
     </div>
   </div>
 );
+}
 
 
 // --- Private Route Wrapper ---
