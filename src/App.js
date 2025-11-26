@@ -124,7 +124,7 @@ const handleLogin = async () => {
         setSessionToken(data.session_token || null);
 
         if (data?.name === "Admin") navigate("/AdminPanel");
-        else navigate("/ChatBot");
+        else navigate("/Quiz");
       } else {
         setError(data.detail || "Invalid credentials");
       }
@@ -189,7 +189,7 @@ const handleLogin = async () => {
           if (verifyData.user.name === "Admin") {
             navigate("/AdminPanel");
           } else {
-            navigate("/ChatBot");
+            navigate("/Quiz");
           }
         } else {
           console.warn("[WARN] OTP verification failed:", verifyData);
@@ -399,7 +399,7 @@ function App() {
           }
         /> 
         <Route
-          path="/ChatBot"
+          path="/Quiz"
           element={<Chatbot_gamified_quiz doctorData={doctorData} />}
         />
 
