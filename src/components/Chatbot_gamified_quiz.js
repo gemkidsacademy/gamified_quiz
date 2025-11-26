@@ -24,7 +24,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
       setMessages([
         {
           sender: "bot",
-          text: `Welcome, Dr. ${doctorData.name}! Please select your class to start the quiz. ${doctorData.student_id}`,
+          text: `Welcome, Dr. ${doctorData.name}! Please select your class to start the quiz.`,
           links: [],
         },
       ]);
@@ -327,6 +327,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
 
