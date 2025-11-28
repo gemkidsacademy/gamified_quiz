@@ -329,9 +329,7 @@ function App() {
   const [doctorData, setDoctorData] = useState(null);
   const [sessionToken, setSessionToken] = useState(null);
 
-  useEffect(() => {
-    document.title = "Class Management System";
-  }, []);
+  
 
   return (
     <Router>
