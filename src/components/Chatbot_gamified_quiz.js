@@ -205,7 +205,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   return (
     <div className="chat-container">
       <div className="chat-box">
-        <div className="chat-header">Gem AI Quiz</div>
+        <div className="chat-header">GEM AI Quiz</div>
 
         <div className="chat-messages">
           {messages.map((msg, idx) => (
@@ -327,6 +327,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
 
