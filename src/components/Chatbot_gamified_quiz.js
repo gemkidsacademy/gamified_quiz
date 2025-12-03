@@ -6,11 +6,16 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   // ------------------ State ------------------
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [selectedClass, setSelectedClass] = useState(""); // ✅ track selected class
+  const [selectedClass, setSelectedClass] = useState(doctorData?.class_name || ""); // ✅ track selected class
   const [isWaiting, setIsWaiting] = useState(false);
   const [quiz, setQuiz] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const chatEndRef = useRef(null);
+  useEffect(() => {
+    if (doctorData?.class_name) {
+      setSelectedClass(doctorData.class_name);
+    }
+  }, [doctorData?.class_name]);
 
   // ------------------ Auto-scroll ------------------
   useEffect(() => {
@@ -24,7 +29,8 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
       setMessages([
         {
           sender: "bot",
-          text: `Welcome, Dr. ${doctorData.name}! Please select your class to start the quiz.`,
+          text: `Welcome, Dear ${doctorData.name}! Let's begin your weekly quiz.`,
+
           links: [],
         },
       ]);
@@ -250,35 +256,13 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
         style={{ display: "flex", flexDirection: "column", gap: "8px" }}
         >
         {/* Class selection before starting the quiz */}
-        {!selectedClass && doctorData?.class_name ? (
-            <>
-            <label htmlFor="class-select">Class Name:</label>
-            <select
-                id="class-select"
-                value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
-            >
-                <option value="">-- Select class --</option>
-                {[].concat(doctorData.class_name) // ensure array
-                .flatMap(cn => cn.split(","))   // split comma-separated strings
-                .map(cls => cls.trim())          // trim whitespace
-                .map(cls => (
-                    <option key={cls} value={cls}>
-                    {cls}
-                    </option>
-                ))}
-            </select>
-            </>
-        ) : (
-            <>
-            {/* Quiz completed message */}
+        <>
             {currentQuestionIndex === null && (
                 <div style={{ color: "red", marginBottom: "4px" }}>
                 Quiz completed – input disabled
                 </div>
             )}
 
-            {/* Show options buttons if they exist */}
             {currentQuestionIndex !== null &&
             quiz?.questions[currentQuestionIndex]?.options ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -287,7 +271,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
                     key={idx}
                     type="button"
                     onClick={() => handleAnswerSelection(opt.split(":")[0])}
-                    disabled={isWaiting || currentQuestionIndex === null}
+                    disabled={isWaiting}
                     style={{
                         padding: "8px 16px",
                         textAlign: "left",
@@ -299,7 +283,6 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
                 ))}
                 </div>
             ) : (
-                /* Fallback text input if no options */
                 <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <input
                     type="text"
@@ -319,7 +302,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
                 </div>
             )}
             </>
-        )}
+
         </form>
 
 
@@ -327,6 +310,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     </div>
   );
 }
+
 
 
 
