@@ -441,8 +441,7 @@ function App() {
   );
 }
 
-// --- Styles ---
-const styles = {
+// --- Styles ---const styles = {
   container: {
     display: "flex",
     justifyContent: "center",
@@ -450,6 +449,7 @@ const styles = {
     height: "100vh",
     background: "#f0f2f5",
   },
+
   loginBox: {
     padding: "30px",
     borderRadius: "8px",
@@ -458,6 +458,7 @@ const styles = {
     textAlign: "center",
     minWidth: "300px",
   },
+
   input: {
     width: "100%",
     padding: "10px",
@@ -466,27 +467,28 @@ const styles = {
     border: "1px solid #ccc",
     fontSize: "16px",
   },
+
   button: {
     width: "100%",
     padding: "10px",
     marginTop: "10px",
     borderRadius: "4px",
     border: "none",
-    background: "#007bff",
     color: "#fff",
     cursor: "pointer",
     fontSize: "16px",
   },
+
+  // 🎨 Gem Brand Colors (from previous working code)
+  gButton: { backgroundColor: "rgb(219, 71, 45)" },   // Generate OTP
+  eButton: { backgroundColor: "rgb(0, 140, 200)" },   // Login
+  mButton: { backgroundColor: "rgb(242, 152, 52)" },  // Continue as Guest
+
   error: {
     color: "red",
     marginTop: "10px",
   },
-  toggle: {
-    marginTop: "10px",
-    cursor: "pointer",
-    color: "#007bff",
-    textDecoration: "underline",
-  },
 };
+
 
 export default App;
