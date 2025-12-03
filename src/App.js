@@ -286,13 +286,14 @@ const handleLogin = async () => {
               }}
               style={{
                 ...styles.button,
-                background: "#28a745",
+                ...styles.gButton,
                 marginTop: "5px",
               }}
               disabled={!email}
             >
               Generate OTP
             </button>
+
           )}
 
           {otpSent && timer === 0 && (
@@ -325,6 +326,7 @@ const handleLogin = async () => {
             onClick={handleLogin}
             style={{
               ...styles.button,
+              ...styles.eButton,
               opacity: 1,
               cursor: "pointer",
               marginTop: "10px",
@@ -332,6 +334,7 @@ const handleLogin = async () => {
           >
             Login
           </button>
+
 
           {otpSent && timer > 0 && (
             <p style={{ marginTop: "10px", textAlign: "center" }}>
