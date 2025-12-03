@@ -219,7 +219,24 @@ const handleLogin = async () => {
   };
 
   return (
-  <div style={styles.container}>
+  <div
+    style={{
+      ...styles.container,
+      flexDirection: "column", // ⭐ ensures logo appears above the card
+    }}
+  >
+
+    {/* ⭐ LOGO ABOVE LOGIN CARD ⭐ */}
+    <img
+      src="https://gemkidsacademy.com.au/wp-content/uploads/2024/10/cropped-logo-4-1.png"
+      alt="Gem Kids Academy"
+      style={{
+        width: "180px",
+        marginBottom: "20px",
+        userSelect: "none",
+      }}
+    />
+
     <div style={styles.loginBox}>
       <h2>
         {loginMode === "password" ? "Login with ID/Password" : "Login with OTP"}
@@ -234,6 +251,7 @@ const handleLogin = async () => {
             onChange={(e) => setUsername(e.target.value)}
             style={styles.input}
           />
+
           <input
             type="password"
             placeholder="Password"
@@ -241,6 +259,7 @@ const handleLogin = async () => {
             onChange={(e) => setPassword(e.target.value)}
             style={styles.input}
           />
+
           <button
             onClick={handleLogin}
             style={{ ...styles.button, opacity: 1, cursor: "pointer" }}
@@ -256,16 +275,20 @@ const handleLogin = async () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             style={styles.input}
-            disabled={otpSent} // disable email input after OTP is sent
+            disabled={otpSent}
           />
 
           {!otpSent && (
             <button
               onClick={() => {
                 generateOtp();
-                setTimer(300); // 5 minutes
+                setTimer(300);
               }}
-              style={{ ...styles.button, background: "#28a745", marginTop: "5px" }}
+              style={{
+                ...styles.button,
+                background: "#28a745",
+                marginTop: "5px",
+              }}
               disabled={!email}
             >
               Generate OTP
@@ -276,9 +299,13 @@ const handleLogin = async () => {
             <button
               onClick={() => {
                 generateOtp();
-                setTimer(300); // restart 5-minute timer
+                setTimer(300);
               }}
-              style={{ ...styles.button, background: "#ffc107", marginTop: "5px" }}
+              style={{
+                ...styles.button,
+                background: "#ffc107",
+                marginTop: "5px",
+              }}
             >
               Resend OTP
             </button>
@@ -296,14 +323,19 @@ const handleLogin = async () => {
 
           <button
             onClick={handleLogin}
-            style={{ ...styles.button, opacity: 1, cursor: "pointer", marginTop: "10px" }}
+            style={{
+              ...styles.button,
+              opacity: 1,
+              cursor: "pointer",
+              marginTop: "10px",
+            }}
           >
             Login
           </button>
 
           {otpSent && timer > 0 && (
             <p style={{ marginTop: "10px", textAlign: "center" }}>
-              Please enter the OTP sent to your email. Resend available in{" "}
+              Please enter the OTP sent to your email. Resend in{" "}
               {Math.floor(timer / 60).toString().padStart(2, "0")}:
               {(timer % 60).toString().padStart(2, "0")}
             </p>
@@ -315,6 +347,7 @@ const handleLogin = async () => {
     </div>
   </div>
 );
+
 }
 
 
