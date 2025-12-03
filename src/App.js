@@ -445,7 +445,8 @@ function App() {
 }
 
 // --- Styles ---const styles = {
-  container: {
+  const styles = {
+    container: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
