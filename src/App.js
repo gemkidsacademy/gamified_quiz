@@ -18,10 +18,6 @@ import UsageDashboard from "./components/UsageDashboard";
 
 // ===================== LOGIN PAGE =====================
 function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
-  const [mode, setMode] = useState("otp"); // "otp" | "password"
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -63,7 +59,7 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
 
       if (res.ok) {
         setOtpSent(true);
-        setTimer(300); // 5 mins
+        setTimer(300); // 5 minutes
       } else {
         setError(data.detail || "Failed to send OTP");
       }
@@ -77,74 +73,45 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
   const handleLogin = async () => {
     setError("");
 
+    if (!otpSent) {
+      setError("Please click 'Generate OTP' first");
+      return;
+    }
+    if (!email) {
+      setError("Enter email");
+      return;
+    }
+    if (!otp) {
+      setError("Enter OTP");
+      return;
+    }
+
     try {
-      // PASSWORD LOGIN
-      if (mode === "password") {
-        if (!username || !password) {
-          setError("Enter username & password");
-          return;
-        }
+      const res = await fetch(`${server}/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          otp,
+        }),
+      });
 
-        const res = await fetch(`${server}/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ name: username, password }),
+      const data = await res.json();
+
+      if (res.ok) {
+        setIsLoggedIn(true);
+        setDoctorData({
+          student_id: data.user.student_id,
+          email: data.user.email,
+          name: data.user.name,
+          class_name: Array.isArray(data.user.class_name)
+            ? data.user.class_name
+            : [data.user.class_name],
         });
 
-        const data = await res.json();
-
-        if (res.ok) {
-          setIsLoggedIn(true);
-          setDoctorData(data);
-          setSessionToken(data.session_token || null);
-          navigate(data.name === "Admin" ? "/AdminPanel" : "/quiz");
-        } else {
-          setError(data.detail || "Invalid credentials");
-        }
-      }
-
-      // OTP LOGIN
-      else {
-        if (!otpSent) {
-          setError("Please click 'Generate OTP' first");
-          return;
-        }
-        if (!email) {
-          setError("Enter email");
-          return;
-        }
-        if (!otp) {
-          setError("Enter OTP");
-          return;
-        }
-
-        const res = await fetch(`${server}/verify-otp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: email.trim().toLowerCase(),
-            otp,
-          }),
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          setIsLoggedIn(true);
-          setDoctorData({
-            student_id: data.user.student_id,
-            email: data.user.email,
-            name: data.user.name,
-            class_name: Array.isArray(data.user.class_name)
-              ? data.user.class_name
-              : [data.user.class_name],
-          });
-
-          navigate(data.user.name === "Admin" ? "/AdminPanel" : "/quiz");
-        } else {
-          setError(data.detail || "Invalid OTP");
-        }
+        navigate(data.user.name === "Admin" ? "/AdminPanel" : "/quiz");
+      } else {
+        setError(data.detail || "Invalid OTP");
       }
     } catch (e) {
       console.error(e);
@@ -152,19 +119,8 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
     }
   };
 
-  // ---------------- SWITCH LOGIN MODE ----------------
-  const switchMode = () => {
-    setMode(mode === "password" ? "otp" : "password");
-    setError("");
-    setOtpSent(false);
-    setOtp("");
-    setUsername("");
-    setPassword("");
-  };
-
-  // ---------------- DISABLE LOGIN UNTIL OTP SENT ----------------
-  const loginDisabled =
-    mode === "otp" ? !otpSent : false; // password mode always enabled
+  // LOGIN BUTTON disabled until OTP is generated
+  const loginDisabled = !otpSent;
 
   return (
     <div style={{ ...styles.container, flexDirection: "column" }}>
@@ -175,88 +131,59 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
       />
 
       <div style={styles.loginBox}>
-        <h2>
-          {mode === "password" ? "Login with ID / Password" : "Login with OTP"}
-        </h2>
+        <h2>Login with OTP</h2>
 
-        {/* SWITCH LOGIN MODE BUTTON */}
-        <button
-          onClick={switchMode}
-          style={{ ...styles.button, marginBottom: "20px", background: "#888" }}
-        >
-          Switch to {mode === "password" ? "OTP Login" : "Password Login"}
-        </button>
+        {/* EMAIL INPUT */}
+        <input
+          type="email"
+          style={styles.input}
+          placeholder="Enter your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={otpSent}
+        />
 
-        {/* PASSWORD LOGIN UI */}
-        {mode === "password" && (
-          <>
-            <input
-              style={styles.input}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Username"
-            />
-            <input
-              type="password"
-              style={styles.input}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-            />
-          </>
+        {/* GENERATE OTP BUTTON */}
+        {!otpSent && (
+          <button
+            style={{ ...styles.button, ...styles.gButton }}
+            onClick={generateOtp}
+            disabled={!email}
+          >
+            Generate OTP
+          </button>
         )}
 
-        {/* OTP LOGIN UI */}
-        {mode === "otp" && (
-          <>
-            <input
-              type="email"
-              style={styles.input}
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={otpSent}
-            />
-
-            {!otpSent && (
-              <button
-                style={{ ...styles.button, ...styles.gButton }}
-                onClick={generateOtp}
-                disabled={!email}
-              >
-                Generate OTP
-              </button>
-            )}
-
-            {otpSent && timer === 0 && (
-              <button
-                style={{ ...styles.button, background: "#ffc107" }}
-                onClick={generateOtp}
-              >
-                Resend OTP
-              </button>
-            )}
-
-            {otpSent && (
-              <input
-                style={styles.input}
-                placeholder="Enter OTP"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-              />
-            )}
-
-            {otpSent && timer > 0 && (
-              <p>
-                Resend in{" "}
-                {String(Math.floor(timer / 60)).padStart(2, "0")}:
-                {String(timer % 60).padStart(2, "0")}
-              </p>
-            )}
-          </>
+        {/* RESEND OTP BUTTON */}
+        {otpSent && timer === 0 && (
+          <button
+            style={{ ...styles.button, background: "#ffc107" }}
+            onClick={generateOtp}
+          >
+            Resend OTP
+          </button>
         )}
 
-        {/* LOGIN BUTTON (DISABLED UNTIL OTP SENT) */}
+        {/* OTP INPUT */}
+        {otpSent && (
+          <input
+            style={styles.input}
+            placeholder="Enter OTP"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+          />
+        )}
+
+        {/* COUNTDOWN */}
+        {otpSent && timer > 0 && (
+          <p>
+            Resend in{" "}
+            {String(Math.floor(timer / 60)).padStart(2, "0")}:
+            {String(timer % 60).padStart(2, "0")}
+          </p>
+        )}
+
+        {/* LOGIN BUTTON */}
         <button
           style={{
             ...styles.button,
