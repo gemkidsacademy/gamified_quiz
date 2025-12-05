@@ -14,173 +14,135 @@ import EditDoctor from "./components/EditDoctorPage";
 import ViewDoctors from "./components/ViewDoctors";
 import DeleteDoctor from "./components/DeleteDoctor";
 import Chatbot_gamified_quiz from "./components/Chatbot_gamified_quiz";
-
-
 import UsageDashboard from "./components/UsageDashboard";
-
 
 
 // --- Login Page ---
 function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
-  const [loginMode, setLoginMode] = useState("otp"); // "password" or "otp"
+  const [loginMode, setLoginMode] = useState("otp");
   const [isDisabled, setIsDisabled] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
-  const [timer, setTimer] = useState(0); // countdown in seconds
-   const [canLogin, setCanLogin] = useState(false); 
-
-
+  const [timer, setTimer] = useState(0);
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState(null);
+
   const navigate = useNavigate();
   const server = "https://web-production-481a5.up.railway.app";
 
 
-
-  // Start OTP timer when otpSent becomes true
-useEffect(() => {
-  let interval = null;
-  if (otpSent && timer > 0) {
-    interval = setInterval(() => {
-      setTimer(prev => prev - 1);
-    }, 1000);
-  } else if (timer === 0) {
-    clearInterval(interval);
-  }
-  return () => clearInterval(interval);
-}, [otpSent, timer]);
-
-  
-
-  // --- Generate OTP ---
-  const generateOtp = async () => {
-  if (!email) {
-    setError("Please enter an email address");
-    return;
-  }
-
-  const formattedEmail = email.trim().toLowerCase();
-
-  // Basic email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(formattedEmail)) {
-    setError("Please enter a valid email address");
-    return;
-  }
-
-  try {
-    const response = await fetch(`${server}/send-otp`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: formattedEmail }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      setOtpSent(true);
-      setCanLogin(true); // ENABLE login button
-      setError(null);
-      setIsDisabled(false);
-      console.log("[INFO] OTP sent successfully:", data);
-    } else {
-      setError(data.detail || "Failed to generate OTP");
-      console.warn("[WARN] OTP generation failed:", data);
+  // OTP Timer
+  useEffect(() => {
+    let interval = null;
+    if (otpSent && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
     }
-  } catch (err) {
-    setError("Failed to generate OTP");
-    console.error("[ERROR] Exception while generating OTP:", err);
-  }
-};
+    return () => clearInterval(interval);
+  }, [otpSent, timer]);
 
-  // --- Login Handler ---
-  // ------------------ Handle Password Login Only ------------------
-const handleLogin = async () => {
-  try {
-    setError(null);
 
-    // ---------------- Password Login ----------------
-    if (loginMode === "password") {
-      if (!username || !password) {
-        setError("Please enter username and password");
-        return;
-      }
+  // Generate OTP
+  const generateOtp = async () => {
+    if (!email) {
+      setError("Please enter an email address");
+      return;
+    }
 
-      console.log("[INFO] Attempting password login:", username);
+    const formattedEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-      const response = await fetch(`${server}/login`, {
+    if (!emailRegex.test(formattedEmail)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${server}/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ name: username, password }),
+        body: JSON.stringify({ email: formattedEmail }),
       });
 
       const data = await response.json();
-      console.log("[DEBUG] Password login response:", data);
 
       if (response.ok) {
-        setIsLoggedIn(true);
-        setDoctorData(data);
-        setSessionToken(data.session_token || null);
-
-        if (data?.name === "Admin") navigate("/AdminPanel");
-        else navigate("/quiz");
+        setOtpSent(true);
+        setError(null);
+        setIsDisabled(false);
+        setTimer(300);
+        console.log("[INFO] OTP sent successfully:", data);
       } else {
-        setError(data.detail || "Invalid credentials");
+        setError(data.detail || "Failed to generate OTP");
       }
-    } 
+    } catch (err) {
+      setError("Failed to generate OTP");
+      console.error(err);
+    }
+  };
 
-    // ---------------- OTP Login (Email) ----------------
-    else if (loginMode === "otp") {
-      console.log("[INFO] OTP login mode active");
-    if (!canLogin) {
-      setError("Please generate OTP first.");
-      return;
+
+  // Login Handler
+  const handleLogin = async () => {
+    try {
+      setError(null);
+
+      // Password Login
+      if (loginMode === "password") {
+        if (!username || !password) {
+          setError("Please enter username and password");
+          return;
+        }
+
+        const response = await fetch(`${server}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ name: username, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setIsLoggedIn(true);
+          setDoctorData(data);
+          setSessionToken(data.session_token || null);
+
+          navigate(data?.name === "Admin" ? "/AdminPanel" : "/quiz");
+        } else {
+          setError(data.detail || "Invalid credentials");
+        }
       }
 
-      if (!otpSent) {
-        setError("Please generate OTP first");
-        return;
-      }
+      // OTP Login
+      else if (loginMode === "otp") {
+        if (!otpSent) {
+          setError("Please generate OTP first");
+          return;
+        }
+        if (!email) {
+          setError("Please enter your email");
+          return;
+        }
+        if (!otp) {
+          setError("Please enter the OTP");
+          return;
+        }
 
-      if (!email) {
-        setError("Please enter your email");
-        return;
-      }
+        const formattedEmail = email.trim().toLowerCase();
 
-      if (!otp) {
-        setError("Please enter the OTP");
-        return;
-      }
-
-      const formattedEmail = email.trim().toLowerCase();
-
-      console.log("[INFO] Sending verify-otp request for email:", formattedEmail, "OTP:", otp);
-
-      try {
         const verifyResponse = await fetch(`${server}/verify-otp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: formattedEmail, otp }),
         });
 
-        console.log("[DEBUG] Raw verify-otp response status:", verifyResponse.status);
-
-        let verifyData;
-        try {
-          verifyData = await verifyResponse.json();
-          console.log("[DEBUG] verify-otp response JSON:", verifyData);
-        } catch (err) {
-          console.error("[ERROR] Failed to parse verify-otp response:", err);
-          setError("Failed to verify OTP");
-          return;
-        }
+        const verifyData = await verifyResponse.json();
 
         if (verifyResponse.ok) {
-          console.log("[INFO] OTP verified successfully");
-
           setIsLoggedIn(true);
           setDoctorData({
             student_id: verifyData.user.student_id,
@@ -188,32 +150,22 @@ const handleLogin = async () => {
             name: verifyData.user.name,
             class_name: Array.isArray(verifyData.user.class_name)
               ? verifyData.user.class_name
-              : [verifyData.user.class_name], // wrap single string
+              : [verifyData.user.class_name],
           });
-          setSessionToken(null);
 
-          if (verifyData.user.name === "Admin") {
-            navigate("/AdminPanel");
-          } else {
-            navigate("/quiz");
-          }
+          navigate(verifyData.user.name === "Admin" ? "/AdminPanel" : "/quiz");
         } else {
-          console.warn("[WARN] OTP verification failed:", verifyData);
           setError(verifyData.detail || "Invalid OTP");
         }
-      } catch (err) {
-        console.error("[ERROR] OTP login failed unexpectedly:", err);
-        setError("Login failed. Please try again.");
       }
+    } catch (err) {
+      console.error(err);
+      setError("Login failed. Please try again.");
     }
-  } catch (err) {
-    console.error("[ERROR] Login failed unexpectedly:", err);
-    setError("Login failed. Please try again.");
-  }
-};
+  };
 
 
-
+  // Switch between login modes
   const toggleLoginMode = () => {
     setLoginMode(loginMode === "password" ? "otp" : "password");
     setError(null);
@@ -221,148 +173,110 @@ const handleLogin = async () => {
     setOtp("");
     setUsername("");
     setPassword("");
-    setCanLogin(false);
-
   };
 
+
   return (
-  <div
-    style={{
-      ...styles.container,
-      flexDirection: "column", // ⭐ ensures logo appears above the card
-    }}
-  >
+    <div style={{ ...styles.container, flexDirection: "column" }}>
+      <img
+        src="https://gemkidsacademy.com.au/wp-content/uploads/2024/10/cropped-logo-4-1.png"
+        alt="Gem Kids Academy"
+        style={{ width: "180px", marginBottom: "20px" }}
+      />
 
-    {/* ⭐ LOGO ABOVE LOGIN CARD ⭐ */}
-    <img
-      src="https://gemkidsacademy.com.au/wp-content/uploads/2024/10/cropped-logo-4-1.png"
-      alt="Gem Kids Academy"
-      style={{
-        width: "180px",
-        marginBottom: "20px",
-        userSelect: "none",
-      }}
-    />
+      <div style={styles.loginBox}>
+        <h2>{loginMode === "password" ? "Login with ID/Password" : "Login with OTP"}</h2>
 
-    <div style={styles.loginBox}>
-      <h2>
-        {loginMode === "password" ? "Login with ID/Password" : "Login with OTP"}
-      </h2>
-
-      {loginMode === "password" ? (
-        <>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={styles.input}
-          />
-
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
-          />
-
-          <button
-            onClick={handleLogin}
-            style={{ ...styles.button, opacity: 1, cursor: "pointer" }}
-          >
-            Login
-          </button>
-        </>
-      ) : (
-        <>
-          <input
-            type="email"
-            placeholder="Enter your email address"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setCanLogin(false);    // ⭐ NEW LINE
-            }}
-
-            style={styles.input}
-            disabled={otpSent}
-          />
-
-          {!otpSent && (
-            <button
-              onClick={() => {
-                generateOtp();
-                setTimer(300);
-              }}
-              style={{
-                ...styles.button,
-                ...styles.gButton,
-                marginTop: "5px",
-              }}
-              disabled={!email}
-            >
-              Generate OTP
-            </button>
-
-          )}
-
-          {otpSent && timer === 0 && (
-            <button
-              onClick={() => {
-                generateOtp();
-                setTimer(300);
-              }}
-              style={{
-                ...styles.button,
-                background: "#ffc107",
-                marginTop: "5px",
-              }}
-            >
-              Resend OTP
-            </button>
-          )}
-
-          {otpSent && (
+        {loginMode === "password" ? (
+          <>
             <input
               type="text"
-              placeholder="Enter OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               style={styles.input}
             />
-          )}
 
-          <button
-            onClick={handleLogin}
-            disabled={!canLogin}
-            style={{
-              ...styles.button,
-              ...styles.eButton,
-              opacity: canLogin ? 1 : 0.5,
-              cursor: canLogin ? "pointer" : "not-allowed",
-              marginTop: "10px"
-            }}
-          >
-            Login
-          </button>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={styles.input}
+            />
 
+            <button onClick={handleLogin} style={{ ...styles.button, ...styles.eButton }}>
+              Login
+            </button>
+          </>
+        ) : (
+          <>
+            <input
+              type="email"
+              placeholder="Enter your email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={styles.input}
+              disabled={otpSent}
+            />
 
-          {otpSent && timer > 0 && (
-            <p style={{ marginTop: "10px", textAlign: "center" }}>
-              Please enter the OTP sent to your email. Resend in{" "}
-              {Math.floor(timer / 60).toString().padStart(2, "0")}:
-              {(timer % 60).toString().padStart(2, "0")}
-            </p>
-          )}
-        </>
-      )}
+            {!otpSent && (
+              <button
+                onClick={generateOtp}
+                style={{ ...styles.button, ...styles.gButton }}
+                disabled={!email}
+              >
+                Generate OTP
+              </button>
+            )}
 
-      {error && <p style={styles.error}>{error}</p>}
+            {otpSent && timer === 0 && (
+              <button
+                onClick={generateOtp}
+                style={{ ...styles.button, background: "#ffc107" }}
+              >
+                Resend OTP
+              </button>
+            )}
+
+            {otpSent && (
+              <input
+                type="text"
+                placeholder="Enter OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                style={styles.input}
+              />
+            )}
+
+            <button
+              onClick={handleLogin}
+              style={{
+                ...styles.button,
+                ...styles.eButton,
+                marginTop: "10px",
+              }}
+            >
+              Login
+            </button>
+
+            {otpSent && timer > 0 && (
+              <p>
+                Resend in{" "}
+                {Math.floor(timer / 60)
+                  .toString()
+                  .padStart(2, "0")}
+                :
+                {(timer % 60).toString().padStart(2, "0")}
+              </p>
+            )}
+          </>
+        )}
+
+        {error && <p style={styles.error}>{error}</p>}
+      </div>
     </div>
-  </div>
-);
-
+  );
 }
 
 
@@ -371,13 +285,12 @@ const PrivateRoute = ({ isLoggedIn, children }) => {
   return isLoggedIn ? children : <Navigate to="/" />;
 };
 
+
 // --- Main App ---
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [doctorData, setDoctorData] = useState(null);
   const [sessionToken, setSessionToken] = useState(null);
-
-  
 
   return (
     <Router>
@@ -393,7 +306,6 @@ function App() {
           }
         />
 
-        {/* Admin Routes */}
         <Route
           path="/AdminPanel"
           element={
@@ -402,6 +314,7 @@ function App() {
             </PrivateRoute>
           }
         />
+
         <Route
           path="/add-doctor"
           element={
@@ -410,6 +323,7 @@ function App() {
             </PrivateRoute>
           }
         />
+
         <Route
           path="/edit-doctor"
           element={
@@ -418,6 +332,7 @@ function App() {
             </PrivateRoute>
           }
         />
+
         <Route
           path="/view-doctors"
           element={
@@ -426,6 +341,7 @@ function App() {
             </PrivateRoute>
           }
         />
+
         <Route
           path="/delete-doctor"
           element={
@@ -435,7 +351,6 @@ function App() {
           }
         />
 
-        
         <Route
           path="/usage-dashboard"
           element={
@@ -443,22 +358,18 @@ function App() {
               <UsageDashboard />
             </PrivateRoute>
           }
-        /> 
-        <Route
-          path="/quiz"
-          element={<Chatbot_gamified_quiz doctorData={doctorData} />}
         />
 
-
-        
+        <Route path="/quiz" element={<Chatbot_gamified_quiz doctorData={doctorData} />} />
       </Routes>
     </Router>
   );
 }
 
-// --- Styles ---const styles = {
-  const styles = {
-    container: {
+
+// --- Styles ---
+const styles = {
+  container: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -495,16 +406,14 @@ function App() {
     fontSize: "16px",
   },
 
-  // 🎨 Gem Brand Colors (from previous working code)
-  gButton: { backgroundColor: "rgb(219, 71, 45)" },   // Generate OTP
-  eButton: { backgroundColor: "rgb(0, 140, 200)" },   // Login
-  mButton: { backgroundColor: "rgb(242, 152, 52)" },  // Continue as Guest
+  gButton: { backgroundColor: "rgb(219, 71, 45)" },
+  eButton: { backgroundColor: "rgb(0, 140, 200)" },
+  mButton: { backgroundColor: "rgb(242, 152, 52)" },
 
   error: {
     color: "red",
     marginTop: "10px",
   },
 };
-
 
 export default App;
