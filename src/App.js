@@ -7,7 +7,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-// --- Components ---
+// Components
 import AdminDashboard from "./components/AdminDashboard";
 import AddDoctor from "./components/AddDoctorPage";
 import EditDoctor from "./components/EditDoctorPage";
@@ -16,165 +16,155 @@ import DeleteDoctor from "./components/DeleteDoctor";
 import Chatbot_gamified_quiz from "./components/Chatbot_gamified_quiz";
 import UsageDashboard from "./components/UsageDashboard";
 
-
-// --- Login Page ---
+// ===================== LOGIN PAGE =====================
 function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
-  const [loginMode, setLoginMode] = useState("otp");
-  const [isDisabled, setIsDisabled] = useState(true);
+  const [mode, setMode] = useState("otp"); // "otp" | "password"
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
   const [email, setEmail] = useState("");
-  const [timer, setTimer] = useState(0);
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [error, setError] = useState(null);
+
+  const [timer, setTimer] = useState(0);
+  const [error, setError] = useState("");
 
   const navigate = useNavigate();
   const server = "https://web-production-481a5.up.railway.app";
 
-
-  // OTP Timer
+  // ---------------- TIMER HANDLER ----------------
   useEffect(() => {
-    let interval = null;
-    if (otpSent && timer > 0) {
-      interval = setInterval(() => {
-        setTimer((prev) => prev - 1);
-      }, 1000);
-    }
+    if (!otpSent || timer <= 0) return;
+
+    const interval = setInterval(() => setTimer((t) => t - 1), 1000);
     return () => clearInterval(interval);
   }, [otpSent, timer]);
 
-
-  // Generate OTP
+  // ---------------- GENERATE OTP ----------------
   const generateOtp = async () => {
-    if (!email) {
-      setError("Please enter an email address");
-      return;
-    }
+    setError("");
 
     const formattedEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!emailRegex.test(formattedEmail)) {
+    if (!formattedEmail || !emailRegex.test(formattedEmail)) {
       setError("Please enter a valid email address");
       return;
     }
 
     try {
-      const response = await fetch(`${server}/send-otp`, {
+      const res = await fetch(`${server}/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formattedEmail }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (response.ok) {
+      if (res.ok) {
         setOtpSent(true);
-        setError(null);
-        setIsDisabled(false);
-        setTimer(300);
-        console.log("[INFO] OTP sent successfully:", data);
+        setTimer(300); // 5 mins
       } else {
-        setError(data.detail || "Failed to generate OTP");
+        setError(data.detail || "Failed to send OTP");
       }
-    } catch (err) {
-      setError("Failed to generate OTP");
-      console.error(err);
+    } catch (e) {
+      console.error(e);
+      setError("Failed to send OTP");
     }
   };
 
-
-  // Login Handler
+  // ---------------- HANDLE LOGIN ----------------
   const handleLogin = async () => {
-    try {
-      setError(null);
+    setError("");
 
-      // Password Login
-      if (loginMode === "password") {
+    try {
+      // PASSWORD LOGIN
+      if (mode === "password") {
         if (!username || !password) {
-          setError("Please enter username and password");
+          setError("Enter username & password");
           return;
         }
 
-        const response = await fetch(`${server}/login`, {
+        const res = await fetch(`${server}/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ name: username, password }),
         });
 
-        const data = await response.json();
+        const data = await res.json();
 
-        if (response.ok) {
+        if (res.ok) {
           setIsLoggedIn(true);
           setDoctorData(data);
           setSessionToken(data.session_token || null);
-
-          navigate(data?.name === "Admin" ? "/AdminPanel" : "/quiz");
+          navigate(data.name === "Admin" ? "/AdminPanel" : "/quiz");
         } else {
           setError(data.detail || "Invalid credentials");
         }
       }
 
-      // OTP Login
-      else if (loginMode === "otp") {
+      // OTP LOGIN
+      else {
         if (!otpSent) {
-          setError("Please generate OTP first");
+          setError("Please click 'Generate OTP' first");
           return;
         }
         if (!email) {
-          setError("Please enter your email");
+          setError("Enter email");
           return;
         }
         if (!otp) {
-          setError("Please enter the OTP");
+          setError("Enter OTP");
           return;
         }
 
-        const formattedEmail = email.trim().toLowerCase();
-
-        const verifyResponse = await fetch(`${server}/verify-otp`, {
+        const res = await fetch(`${server}/verify-otp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: formattedEmail, otp }),
+          body: JSON.stringify({
+            email: email.trim().toLowerCase(),
+            otp,
+          }),
         });
 
-        const verifyData = await verifyResponse.json();
+        const data = await res.json();
 
-        if (verifyResponse.ok) {
+        if (res.ok) {
           setIsLoggedIn(true);
           setDoctorData({
-            student_id: verifyData.user.student_id,
-            email: verifyData.user.email,
-            name: verifyData.user.name,
-            class_name: Array.isArray(verifyData.user.class_name)
-              ? verifyData.user.class_name
-              : [verifyData.user.class_name],
+            student_id: data.user.student_id,
+            email: data.user.email,
+            name: data.user.name,
+            class_name: Array.isArray(data.user.class_name)
+              ? data.user.class_name
+              : [data.user.class_name],
           });
 
-          navigate(verifyData.user.name === "Admin" ? "/AdminPanel" : "/quiz");
+          navigate(data.user.name === "Admin" ? "/AdminPanel" : "/quiz");
         } else {
-          setError(verifyData.detail || "Invalid OTP");
+          setError(data.detail || "Invalid OTP");
         }
       }
-    } catch (err) {
-      console.error(err);
-      setError("Login failed. Please try again.");
+    } catch (e) {
+      console.error(e);
+      setError("Login failed. Try again.");
     }
   };
 
-
-  // Switch between login modes
-  const toggleLoginMode = () => {
-    setLoginMode(loginMode === "password" ? "otp" : "password");
-    setError(null);
+  // ---------------- SWITCH LOGIN MODE ----------------
+  const switchMode = () => {
+    setMode(mode === "password" ? "otp" : "password");
+    setError("");
     setOtpSent(false);
     setOtp("");
     setUsername("");
     setPassword("");
   };
 
+  // ---------------- DISABLE LOGIN UNTIL OTP SENT ----------------
+  const loginDisabled =
+    mode === "otp" ? !otpSent : false; // password mode always enabled
 
   return (
     <div style={{ ...styles.container, flexDirection: "column" }}>
@@ -185,45 +175,53 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
       />
 
       <div style={styles.loginBox}>
-        <h2>{loginMode === "password" ? "Login with ID/Password" : "Login with OTP"}</h2>
+        <h2>
+          {mode === "password" ? "Login with ID / Password" : "Login with OTP"}
+        </h2>
 
-        {loginMode === "password" ? (
+        {/* SWITCH LOGIN MODE BUTTON */}
+        <button
+          onClick={switchMode}
+          style={{ ...styles.button, marginBottom: "20px", background: "#888" }}
+        >
+          Switch to {mode === "password" ? "OTP Login" : "Password Login"}
+        </button>
+
+        {/* PASSWORD LOGIN UI */}
+        {mode === "password" && (
           <>
             <input
-              type="text"
-              placeholder="Username"
+              style={styles.input}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              style={styles.input}
+              placeholder="Username"
             />
-
             <input
               type="password"
-              placeholder="Password"
+              style={styles.input}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={styles.input}
+              placeholder="Password"
             />
-
-            <button onClick={handleLogin} style={{ ...styles.button, ...styles.eButton }}>
-              Login
-            </button>
           </>
-        ) : (
+        )}
+
+        {/* OTP LOGIN UI */}
+        {mode === "otp" && (
           <>
             <input
               type="email"
-              placeholder="Enter your email address"
+              style={styles.input}
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={styles.input}
               disabled={otpSent}
             />
 
             {!otpSent && (
               <button
-                onClick={generateOtp}
                 style={{ ...styles.button, ...styles.gButton }}
+                onClick={generateOtp}
                 disabled={!email}
               >
                 Generate OTP
@@ -232,8 +230,8 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
 
             {otpSent && timer === 0 && (
               <button
-                onClick={generateOtp}
                 style={{ ...styles.button, background: "#ffc107" }}
+                onClick={generateOtp}
               >
                 Resend OTP
               </button>
@@ -241,37 +239,36 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
 
             {otpSent && (
               <input
-                type="text"
+                style={styles.input}
                 placeholder="Enter OTP"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                style={styles.input}
               />
             )}
-
-            <button
-              onClick={handleLogin}
-              style={{
-                ...styles.button,
-                ...styles.eButton,
-                marginTop: "10px",
-              }}
-            >
-              Login
-            </button>
 
             {otpSent && timer > 0 && (
               <p>
                 Resend in{" "}
-                {Math.floor(timer / 60)
-                  .toString()
-                  .padStart(2, "0")}
-                :
-                {(timer % 60).toString().padStart(2, "0")}
+                {String(Math.floor(timer / 60)).padStart(2, "0")}:
+                {String(timer % 60).padStart(2, "0")}
               </p>
             )}
           </>
         )}
+
+        {/* LOGIN BUTTON (DISABLED UNTIL OTP SENT) */}
+        <button
+          style={{
+            ...styles.button,
+            ...styles.eButton,
+            opacity: loginDisabled ? 0.6 : 1,
+            cursor: loginDisabled ? "not-allowed" : "pointer",
+          }}
+          disabled={loginDisabled}
+          onClick={handleLogin}
+        >
+          Login
+        </button>
 
         {error && <p style={styles.error}>{error}</p>}
       </div>
@@ -279,14 +276,11 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
   );
 }
 
+// ===================== PRIVATE ROUTE =====================
+const PrivateRoute = ({ isLoggedIn, children }) =>
+  isLoggedIn ? children : <Navigate to="/" />;
 
-// --- Private Route Wrapper ---
-const PrivateRoute = ({ isLoggedIn, children }) => {
-  return isLoggedIn ? children : <Navigate to="/" />;
-};
-
-
-// --- Main App ---
+// ===================== MAIN APP =====================
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [doctorData, setDoctorData] = useState(null);
@@ -360,14 +354,16 @@ function App() {
           }
         />
 
-        <Route path="/quiz" element={<Chatbot_gamified_quiz doctorData={doctorData} />} />
+        <Route
+          path="/quiz"
+          element={<Chatbot_gamified_quiz doctorData={doctorData} />}
+        />
       </Routes>
     </Router>
   );
 }
 
-
-// --- Styles ---
+// ===================== STYLES =====================
 const styles = {
   container: {
     display: "flex",
@@ -376,7 +372,6 @@ const styles = {
     height: "100vh",
     background: "#f0f2f5",
   },
-
   loginBox: {
     padding: "30px",
     borderRadius: "8px",
@@ -385,7 +380,6 @@ const styles = {
     textAlign: "center",
     minWidth: "300px",
   },
-
   input: {
     width: "100%",
     padding: "10px",
@@ -394,7 +388,6 @@ const styles = {
     border: "1px solid #ccc",
     fontSize: "16px",
   },
-
   button: {
     width: "100%",
     padding: "10px",
@@ -405,15 +398,9 @@ const styles = {
     cursor: "pointer",
     fontSize: "16px",
   },
-
   gButton: { backgroundColor: "rgb(219, 71, 45)" },
   eButton: { backgroundColor: "rgb(0, 140, 200)" },
-  mButton: { backgroundColor: "rgb(242, 152, 52)" },
-
-  error: {
-    color: "red",
-    marginTop: "10px",
-  },
+  error: { color: "red", marginTop: "10px" },
 };
 
 export default App;
