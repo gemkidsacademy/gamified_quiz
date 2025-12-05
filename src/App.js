@@ -28,6 +28,7 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [timer, setTimer] = useState(0); // countdown in seconds
+   const [canLogin, setCanLogin] = useState(false); 
 
 
   const [otp, setOtp] = useState("");
@@ -80,6 +81,7 @@ useEffect(() => {
 
     if (response.ok) {
       setOtpSent(true);
+      setCanLogin(true); // ENABLE login button
       setError(null);
       setIsDisabled(false);
       console.log("[INFO] OTP sent successfully:", data);
@@ -133,6 +135,10 @@ const handleLogin = async () => {
     // ---------------- OTP Login (Email) ----------------
     else if (loginMode === "otp") {
       console.log("[INFO] OTP login mode active");
+    if (!canLogin) {
+      setError("Please generate OTP first.");
+      return;
+      }
 
       if (!otpSent) {
         setError("Please generate OTP first");
@@ -215,7 +221,8 @@ const handleLogin = async () => {
     setOtp("");
     setUsername("");
     setPassword("");
-    
+    setCanLogin(false);
+
   };
 
   return (
@@ -273,7 +280,11 @@ const handleLogin = async () => {
             type="email"
             placeholder="Enter your email address"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setCanLogin(false);    // ⭐ NEW LINE
+            }}
+
             style={styles.input}
             disabled={otpSent}
           />
@@ -324,12 +335,13 @@ const handleLogin = async () => {
 
           <button
             onClick={handleLogin}
+            disabled={!canLogin}
             style={{
               ...styles.button,
               ...styles.eButton,
-              opacity: 1,
-              cursor: "pointer",
-              marginTop: "10px",
+              opacity: canLogin ? 1 : 0.5,
+              cursor: canLogin ? "pointer" : "not-allowed",
+              marginTop: "10px"
             }}
           >
             Login
