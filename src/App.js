@@ -27,6 +27,16 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
 
   const navigate = useNavigate();
   const server = "https://web-production-481a5.up.railway.app";
+  const handleEnterKey = (e) => {
+    if (e.key !== "Enter") return;
+  
+    if (!otpSent) {
+      generateOtp();
+    } else {
+      handleLogin();
+    }
+  };
+
 
   // ---------------- TIMER HANDLER ----------------
   useEffect(() => {
@@ -140,8 +150,10 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
           placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={handleEnterKey}
           disabled={otpSent}
         />
+
 
         {/* GENERATE OTP BUTTON */}
         {!otpSent && (
@@ -171,6 +183,7 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
             placeholder="Enter OTP"
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
+            onKeyDown={handleEnterKey}
           />
         )}
 
