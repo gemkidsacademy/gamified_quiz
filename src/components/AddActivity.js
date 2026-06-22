@@ -59,7 +59,7 @@ export default function AddActivity() {
 
   return (
     <div className="add-activity-form">
-      <h3>Add New Activity</h3>
+      <h3>Add New Activity (not functional only add bulk activity is functional)</h3>
       <form onSubmit={handleSubmit}>
         <label>
           Instructions:

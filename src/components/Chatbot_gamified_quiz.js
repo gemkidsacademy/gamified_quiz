@@ -6,14 +6,21 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   // ------------------ State ------------------
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [selectedClass, setSelectedClass] = useState(doctorData?.class_name || ""); // ✅ track selected class
+  const [selectedClass, setSelectedClass] = useState(
+    Array.isArray(doctorData?.class_name) 
+      ? doctorData.class_name[0] 
+      : doctorData?.class_name || ""
+  ); // ✅ track selected class
   const [isWaiting, setIsWaiting] = useState(false);
   const [quiz, setQuiz] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const chatEndRef = useRef(null);
   useEffect(() => {
     if (doctorData?.class_name) {
-      setSelectedClass(doctorData.class_name);
+      const className = Array.isArray(doctorData.class_name) 
+        ? doctorData.class_name[0] 
+        : doctorData.class_name;
+      setSelectedClass(className);
     }
   }, [doctorData?.class_name]);
 
@@ -148,7 +155,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
   try {
     const payload = {
-      student_id: Number(doctorData.student_id),
+      student_id: doctorData.student_id,
       student_name: doctorData.name,
       class_name: selectedClass,
       class_day: doctorData.class_day || "",
