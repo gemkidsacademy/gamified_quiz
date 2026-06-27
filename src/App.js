@@ -17,7 +17,7 @@ import ChatbotGamifiedQuiz from "./components/ChatbotGamifiedQuiz";
 import UsageDashboard from "./components/UsageDashboard";
 
 // ===================== LOGIN PAGE =====================
-function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
+function LoginPage({ setIsLoggedIn, setDoctorData }) {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -226,8 +226,7 @@ const PrivateRoute = ({ isLoggedIn, children }) =>
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [doctorData, setDoctorData] = useState(null);
-  const [sessionToken, setSessionToken] = useState(null);
-
+  
   return (
     <Router>
       <Routes>
@@ -237,7 +236,7 @@ function App() {
             <LoginPage
               setIsLoggedIn={setIsLoggedIn}
               setDoctorData={setDoctorData}
-              setSessionToken={setSessionToken}
+              
             />
           }
         />
