@@ -26,9 +26,9 @@ function LoginPage({ setIsLoggedIn, setDoctorData, setSessionToken }) {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  //const server = "https://web-production-481a5.up.railway.app";
-  const server = "http://127.0.0.1:8000";
-
+  const server = "https://web-production-481a5.up.railway.app";
+  //const server = "http://127.0.0.1:8000";
+  
   const handleEnterKey = (e) => {
     if (e.key !== "Enter") return;
   
