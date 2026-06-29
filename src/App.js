@@ -9,6 +9,8 @@ import {
 
 // Components
 import AdminDashboard from "./components/AdminDashboard";
+
+import AdminDashboardNew from "./components/AdminDashboardNew";
 import AddDoctor from "./components/AddDoctorPage";
 import EditDoctor from "./components/EditDoctorPage";
 import ViewDoctors from "./components/ViewDoctors";
@@ -26,8 +28,8 @@ function LoginPage({ setIsLoggedIn, setDoctorData }) {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  const server = "https://web-production-481a5.up.railway.app";
-  //const server = "http://127.0.0.1:8000";
+  //const server = "https://web-production-481a5.up.railway.app";
+  const server = "http://127.0.0.1:8000";
 
   console.log("SERVER =", server);
   console.log("APP VERSION = 2026-06-27");
@@ -248,7 +250,7 @@ function App() {
           path="/AdminPanel"
           element={
             <PrivateRoute isLoggedIn={isLoggedIn}>
-              <AdminDashboard />
+              <AdminDashboardNew />
             </PrivateRoute>
           }
         />
