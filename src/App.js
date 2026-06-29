@@ -28,8 +28,8 @@ function LoginPage({ setIsLoggedIn, setDoctorData }) {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  //const server = "https://web-production-481a5.up.railway.app";
-  const server = "http://127.0.0.1:8000";
+  const server = "https://web-production-481a5.up.railway.app";
+  //const server = "http://127.0.0.1:8000";
 
   console.log("SERVER =", server);
   console.log("APP VERSION = 2026-06-27");
