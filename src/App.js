@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 
 // Components
-import AdminDashboard from "./components/AdminDashboard";
+//import AdminDashboard from "./components/AdminDashboard";
 
 import AdminDashboardNew from "./components/AdminDashboardNew";
 import AddDoctor from "./components/AddDoctorPage";
