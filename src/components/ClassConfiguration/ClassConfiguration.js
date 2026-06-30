@@ -3,9 +3,14 @@ import "./ClassConfiguration.css";
 
 import AddClass from "./AddClass/AddClass";
 import ManageClasses from "./ManageClass/ManageClasses";
-export default function ClassConfiguration() {
+export default function ClassConfiguration({ loggedInUser })  {
 
     const [view, setView] = useState("home");
+    const [editingClass, setEditingClass] = useState(null);
+    const handleEdit = (item) => {
+        setEditingClass(item);
+        setView("add");
+    };
 
     // -----------------------------
     // Render Add Class Screen
@@ -13,7 +18,12 @@ export default function ClassConfiguration() {
     if (view === "add") {
         return (
             <AddClass
-                onBack={() => setView("home")}
+                loggedInUser={loggedInUser}
+                editingClass={editingClass}
+                onBack={() => {
+                    setEditingClass(null);
+                    setView("home");
+                }}
             />
         );
     }
@@ -24,6 +34,8 @@ export default function ClassConfiguration() {
     if (view === "manage") {
         return (
             <ManageClasses
+                loggedInUser={loggedInUser}
+                onEdit={handleEdit}
                 onBack={() => setView("home")}
             />
         );

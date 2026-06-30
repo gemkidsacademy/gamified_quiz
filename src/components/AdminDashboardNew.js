@@ -7,12 +7,14 @@ import AcademicTerm from "./AcademicTerm/AcademicTerm";
 import Dashboard from "./Dashboard/Dashboard";
 import ClassConfiguration from "./ClassConfiguration/ClassConfiguration";
 import SessionTopicsImport from "./SessionTopicsImport/SessionTopicsImport";
+import Leaderboard from "./Leaderboard/Leaderboard";
 import ActivityTypes from "./ActivityTypes/ActivityTypes";
 import QuizScheduler from "./QuizScheduler/QuizScheduler";
-export default function AdminDashboardNew() {
+export default function AdminDashboardNew({ loggedInUser })  {
   
     // Dashboard is now the default tab
   const [activeTab, setActiveTab] = useState("dashboard");
+  
 
   return (
     <div className="admin-dashboard">
@@ -77,6 +79,14 @@ export default function AdminDashboardNew() {
         >
           Scheduler
         </div>
+        <div
+            className={`tab-item ${
+                activeTab === "leaderboard" ? "active" : ""
+            }`}
+            onClick={() => setActiveTab("leaderboard")}
+        >
+            Leaderboard
+        </div>
 
       </div>
 
@@ -91,34 +101,41 @@ export default function AdminDashboardNew() {
 
         {activeTab === "academic-term" && (
           <div className="tab-panel">
-            <AcademicTerm />
+            <AcademicTerm loggedInUser={loggedInUser} />
           </div>
         )}
 
         {activeTab === "class-configuration" && (
           <div className="tab-panel">
-            <ClassConfiguration/>
+            <ClassConfiguration loggedInUser={loggedInUser}/>
           </div>
         )}
 
         {activeTab === "session-topics" && (
           <div className="tab-panel">
-            <SessionTopicsImport/>
+            <SessionTopicsImport loggedInUser={loggedInUser}/>
                       </div>
         )}
 
         {activeTab === "activity-types" && (
           <div className="tab-panel">
-            <ActivityTypes/>
+            <ActivityTypes loggedInUser={loggedInUser}/>
             
           </div>
         )}
 
         {activeTab === "scheduler" && (
           <div className="tab-panel">
-            <QuizScheduler/>
+            <QuizScheduler loggedInUser={loggedInUser}/>
             
           </div>
+        )}
+        {activeTab === "leaderboard" && (
+            <div className="tab-panel">
+                <Leaderboard
+                    loggedInUser={loggedInUser}
+                />
+            </div>
         )}
 
       </div>

@@ -1,7 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./ConfigureScheduler.css";
 
-export default function ConfigureScheduler({ onBack }) {
+export default function ConfigureScheduler({
+    loggedInUser,
+    onBack,
+}) {
+
+    const server = process.env.REACT_APP_API_BASE;
 
     const [enabled, setEnabled] = useState(true);
 
@@ -14,44 +19,179 @@ export default function ConfigureScheduler({ onBack }) {
         thursday: false,
         friday: false,
         saturday: false,
-        sunday: false
+        sunday: false,
     });
-    const handleRunNow = () => {
 
-    // TODO
-    // Call backend endpoint to execute scheduler immediately
+    useEffect(() => {
 
-    alert("Scheduler started.");
+        if (loggedInUser) {
+            loadConfiguration();
+        }
 
-};
+    }, [loggedInUser]);
+
+    const loadConfiguration = async () => {
+
+        try {
+
+            const res = await fetch(
+                `${server}/scheduler/configuration/load`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        center_code: loggedInUser.center_code,
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok && data.configuration) {
+
+                setEnabled(data.configuration.scheduler_enabled);
+
+                setRunTime(data.configuration.run_time);
+
+                setDays({
+
+                    monday: data.configuration.monday,
+
+                    tuesday: data.configuration.tuesday,
+
+                    wednesday: data.configuration.wednesday,
+
+                    thursday: data.configuration.thursday,
+
+                    friday: data.configuration.friday,
+
+                    saturday: data.configuration.saturday,
+
+                    sunday: data.configuration.sunday,
+
+                });
+
+            }
+
+        } catch (err) {
+
+            console.error(err);
+
+        }
+
+    };
+
+    const handleRunNow = async () => {
+
+        try {
+
+            const res = await fetch(
+                `${server}/scheduler/run`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        center_code: loggedInUser.center_code,
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok) {
+
+                alert(data.message);
+
+            } else {
+
+                alert(data.detail);
+
+            }
+
+        } catch (err) {
+
+            console.error(err);
+
+            alert("Unable to connect to the server.");
+
+        }
+
+    };
 
     const toggleDay = (day) => {
 
         setDays({
+
             ...days,
-            [day]: !days[day]
+
+            [day]: !days[day],
+
         });
 
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
 
-        console.log({
+        try {
 
-            enabled,
+            const res = await fetch(
+                `${server}/scheduler/configuration`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
 
-            runTime,
+                        center_code: loggedInUser.center_code,
 
-            schedulerTimeZone: "Australia/Sydney",
+                        scheduler_enabled: enabled,
 
-            days
+                        run_time: runTime,
 
-        });
+                        timezone: "Australia/Sydney",
 
-        // TODO
-        // Save scheduler configuration
+                        monday: days.monday,
 
-        alert("Scheduler configuration saved successfully.");
+                        tuesday: days.tuesday,
+
+                        wednesday: days.wednesday,
+
+                        thursday: days.thursday,
+
+                        friday: days.friday,
+
+                        saturday: days.saturday,
+
+                        sunday: days.sunday,
+
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok) {
+
+                alert(data.message);
+
+            } else {
+
+                alert(data.detail);
+
+            }
+
+        } catch (err) {
+
+            console.error(err);
+
+            alert("Unable to connect to the server.");
+
+        }
 
     };
 
@@ -209,48 +349,32 @@ export default function ConfigureScheduler({ onBack }) {
 
                 <ul>
 
+                    <li>The scheduler runs only when it is enabled.</li>
+
                     <li>
-
-                        The scheduler runs only when it is enabled.
-
+                        It executes at the configured time using the
+                        academy's local time zone.
                     </li>
 
                     <li>
-
-                        It executes at the configured time
-                        using the academy's local time zone.
-
-                    </li>
-
-                    <li>
-
                         It only runs on the selected days.
-
                     </li>
 
                     <li>
-
-                        During execution, it determines the
-                        current academic week from the
-                        configured term.
-
+                        During execution, it determines the current
+                        academic session from the configured term.
                     </li>
 
                     <li>
-
-                        It retrieves the corresponding session,
-                        loads its assigned topic,
-                        randomly selects one enabled activity
-                        type and generates the gamified quiz.
-
+                        It retrieves the corresponding session topic,
+                        randomly selects one enabled activity type,
+                        and generates a gamified quiz.
                     </li>
 
                     <li>
-
-                        Generated quizzes become available
-                        to students belonging to the matching
-                        Category → Class Year → Class Day.
-
+                        Generated quizzes become available to students
+                        belonging to the matching Category →
+                        Class Year → Class Day.
                     </li>
 
                 </ul>

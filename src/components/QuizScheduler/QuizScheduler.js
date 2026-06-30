@@ -3,13 +3,15 @@ import "./QuizScheduler.css";
 
 import ConfigureScheduler from "./ConfigureScheduler/ConfigureScheduler";
 
-export default function QuizScheduler() {
+export default function QuizScheduler({ loggedInUser }) {
 
     return (
 
         <div className="scheduler">
 
-            <ConfigureScheduler />
+            <ConfigureScheduler
+                loggedInUser={loggedInUser}
+            />
 
         </div>
 

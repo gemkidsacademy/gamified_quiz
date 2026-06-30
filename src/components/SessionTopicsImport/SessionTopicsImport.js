@@ -4,7 +4,7 @@ import "./SessionTopicsImport.css";
 import DownloadTemplate from "./DownloadTemplate/DownloadTemplate";
 import UploadTopics from "./UploadTopics/UploadTopics";
 
-export default function SessionTopicsImport() {
+export default function SessionTopicsImport({ loggedInUser }) {
 
     const [view, setView] = useState("home");
 
@@ -16,6 +16,7 @@ export default function SessionTopicsImport() {
 
         return (
             <DownloadTemplate
+                loggedInUser={loggedInUser}
                 onBack={() => setView("home")}
             />
         );
@@ -30,11 +31,13 @@ export default function SessionTopicsImport() {
 
         return (
             <UploadTopics
+                loggedInUser={loggedInUser}
                 onBack={() => setView("home")}
             />
         );
 
     }
+
 
     return (
 

@@ -19,8 +19,12 @@ import ChatbotGamifiedQuiz from "./components/ChatbotGamifiedQuiz";
 import UsageDashboard from "./components/UsageDashboard";
 
 // ===================== LOGIN PAGE =====================
-function LoginPage({ setIsLoggedIn, setDoctorData }) {
+function LoginPage({ setIsLoggedIn, setLoggedInUser }) {
   const [email, setEmail] = useState("");
+  const server = process.env.REACT_APP_API_BASE;
+  const [loginMode, setLoginMode] = useState("otp");
+  const [studentId, setStudentId] = useState("");
+  const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
 
@@ -28,8 +32,8 @@ function LoginPage({ setIsLoggedIn, setDoctorData }) {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  const server = "https://web-production-481a5.up.railway.app";
-  //const server = "http://127.0.0.1:8000";
+  //const server = "https://web-production-481a5.up.railway.app";
+  
 
   console.log("SERVER =", server);
   console.log("APP VERSION = 2026-06-27");
@@ -43,6 +47,79 @@ function LoginPage({ setIsLoggedIn, setDoctorData }) {
       handleLogin();
     }
   };
+  const handleStudentLogin = async () => {
+  setError("");
+
+  if (!studentId.trim()) {
+    setError("Enter Student ID");
+    return;
+  }
+
+  if (!password.trim()) {
+    setError("Enter Password");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${server}/student-login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        student_id: studentId.trim(),
+        password: password,
+      }),
+    });
+
+    const data = await res.json();
+    console.log("LOGIN RESPONSE:", data);
+
+    if (res.ok) {
+      setIsLoggedIn(true);
+
+      // -----------------------
+      // Admin Login
+      // -----------------------
+      if (data.user_type === "admin") {
+
+          setLoggedInUser({
+              user_type: "admin",
+              id: data.admin.id,
+              username: data.admin.username,
+              role: data.admin.role,
+              center_code: data.admin.center_code,
+          });
+
+          navigate("/AdminPanel");
+          return;
+      }
+
+      // -----------------------
+      // Student Login
+      // -----------------------
+      setLoggedInUser({
+        user_type: "student",
+        student_id: data.student.student_id,
+        name: data.student.name,
+        class_name: data.student.class_name,
+        student_year: data.student.student_year,
+        class_day: data.student.class_day,
+        center_code: data.student.center_code,
+        center_name: data.student.center_name,
+        parent_email: data.student.parent_email,
+      });
+
+      navigate("/quiz");
+    }
+    else {
+      setError(data.detail || "Invalid Username or Password");
+    }
+  } catch (err) {
+    console.error(err);
+    setError("Login failed");
+  }
+};
 
 
   // ---------------- TIMER HANDLER ----------------
@@ -116,17 +193,34 @@ function LoginPage({ setIsLoggedIn, setDoctorData }) {
       const data = await res.json();
 
       if (res.ok) {
-        setIsLoggedIn(true);
-        setDoctorData({
-          student_id: data.user.student_id,
-          email: data.user.email,
-          name: data.user.name,
-          class_name: Array.isArray(data.user.class_name)
-            ? data.user.class_name
-            : [data.user.class_name],
-        });
+          setIsLoggedIn(true);
 
-        navigate(data.user.name === "Admin" ? "/AdminPanel" : "/quiz");
+          if (data.user_type === "admin") {
+              setLoggedInUser({
+                  user_type: "admin",
+                  id: data.admin.id,
+                  username: data.admin.username,
+                  role: data.admin.role,
+                  center_code: data.admin.center_code,
+              });
+
+              navigate("/AdminPanel");
+              return;
+          }
+
+          setLoggedInUser({
+              user_type: "student",
+              student_id: data.student.student_id,
+              name: data.student.name,
+              class_name: data.student.class_name,
+              class_day: data.student.class_day,
+              student_year: data.student.student_year,
+              center_code: data.student.center_code,
+              center_name: data.student.center_name,
+              parent_email: data.student.parent_email,
+          });
+
+          navigate("/quiz");
       } else {
         setError(data.detail || "Invalid OTP");
       }
@@ -148,74 +242,122 @@ function LoginPage({ setIsLoggedIn, setDoctorData }) {
       />
 
       <div style={styles.loginBox}>
-        <h2>Login with OTP</h2>
-
-        {/* EMAIL INPUT */}
-        <input
-          type="email"
-          style={styles.input}
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          onKeyDown={handleEnterKey}
-          disabled={otpSent}
-        />
-
-
-        {/* GENERATE OTP BUTTON */}
-        {!otpSent && (
-          <button
-            style={{ ...styles.button, ...styles.gButton }}
-            onClick={generateOtp}
-            disabled={!email}
-          >
-            Generate OTP
-          </button>
-        )}
-
-        {/* RESEND OTP BUTTON */}
-        {otpSent && timer === 0 && (
-          <button
-            style={{ ...styles.button, background: "#ffc107" }}
-            onClick={generateOtp}
-          >
-            Resend OTP
-          </button>
-        )}
-
-        {/* OTP INPUT */}
-        {otpSent && (
-          <input
-            style={styles.input}
-            placeholder="Enter OTP"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            onKeyDown={handleEnterKey}
-          />
-        )}
-
-        {/* COUNTDOWN */}
-        {otpSent && timer > 0 && (
-          <p>
-            Resend in{" "}
-            {String(Math.floor(timer / 60)).padStart(2, "0")}:
-            {String(timer % 60).padStart(2, "0")}
-          </p>
-        )}
-
-        {/* LOGIN BUTTON */}
+      <div style={styles.toggleContainer}>
         <button
           style={{
-            ...styles.button,
-            ...styles.eButton,
-            opacity: loginDisabled ? 0.6 : 1,
-            cursor: loginDisabled ? "not-allowed" : "pointer",
+            ...styles.toggleButton,
+            ...(loginMode === "otp" ? styles.activeToggle : {}),
           }}
-          disabled={loginDisabled}
-          onClick={handleLogin}
+          onClick={() => setLoginMode("otp")}
         >
-          Login
+          OTP Login
         </button>
+
+        <button
+          style={{
+            ...styles.toggleButton,
+            ...(loginMode === "student" ? styles.activeToggle : {}),
+          }}
+          onClick={() => setLoginMode("student")}
+        >
+          ID Login
+        </button>
+      </div>
+        {loginMode === "otp" && (
+  <>
+    <h2>Login with OTP</h2>
+
+    <input
+      type="email"
+      style={styles.input}
+      placeholder="Enter your email"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      onKeyDown={handleEnterKey}
+      disabled={otpSent}
+    />
+
+    {!otpSent && (
+      <button
+        style={{ ...styles.button, ...styles.gButton }}
+        onClick={generateOtp}
+        disabled={!email}
+      >
+        Generate OTP
+      </button>
+    )}
+
+    {otpSent && timer === 0 && (
+      <button
+        style={{ ...styles.button, background: "#ffc107" }}
+        onClick={generateOtp}
+      >
+        Resend OTP
+      </button>
+    )}
+
+    {otpSent && (
+      <input
+        style={styles.input}
+        placeholder="Enter OTP"
+        value={otp}
+        onChange={(e) => setOtp(e.target.value)}
+        onKeyDown={handleEnterKey}
+      />
+    )}
+
+    {otpSent && timer > 0 && (
+      <p>
+        Resend in{" "}
+        {String(Math.floor(timer / 60)).padStart(2, "0")}:
+        {String(timer % 60).padStart(2, "0")}
+      </p>
+    )}
+
+    <button
+      style={{
+        ...styles.button,
+        ...styles.eButton,
+        opacity: loginDisabled ? 0.6 : 1,
+        cursor: loginDisabled ? "not-allowed" : "pointer",
+      }}
+      disabled={loginDisabled}
+      onClick={handleLogin}
+    >
+      Login
+    </button>
+  </>
+)}
+        {loginMode === "student" && (
+          <>
+            <h2>Login With ID/Password</h2>
+
+            <input
+              style={styles.input}
+              placeholder="Student ID"
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
+            />
+
+            <input
+              type="password"
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <button
+              style={{
+                ...styles.button,
+                backgroundColor: "#28a745",
+              }}
+              onClick={handleStudentLogin}
+            >
+              Login
+            </button>
+          </>
+        )}
 
         {error && <p style={styles.error}>{error}</p>}
       </div>
@@ -230,7 +372,7 @@ const PrivateRoute = ({ isLoggedIn, children }) =>
 // ===================== MAIN APP =====================
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [doctorData, setDoctorData] = useState(null);
+  const [loggedInUser, setLoggedInUser] = useState(null);
   
   return (
     <Router>
@@ -239,9 +381,8 @@ function App() {
           path="/"
           element={
             <LoginPage
-              setIsLoggedIn={setIsLoggedIn}
-              setDoctorData={setDoctorData}
-              
+                setIsLoggedIn={setIsLoggedIn}
+                setLoggedInUser={setLoggedInUser}
             />
           }
         />
@@ -250,7 +391,9 @@ function App() {
           path="/AdminPanel"
           element={
             <PrivateRoute isLoggedIn={isLoggedIn}>
-              <AdminDashboardNew />
+              <AdminDashboardNew
+                loggedInUser={loggedInUser}
+              />
             </PrivateRoute>
           }
         />
@@ -302,7 +445,9 @@ function App() {
 
         <Route
           path="/quiz"
-          element={<ChatbotGamifiedQuiz doctorData={doctorData} />}
+          element={<ChatbotGamifiedQuiz
+            loggedInUser={loggedInUser}
+        />}
         />
       </Routes>
     </Router>
@@ -346,6 +491,28 @@ const styles = {
   },
   gButton: { backgroundColor: "rgb(219, 71, 45)" },
   eButton: { backgroundColor: "rgb(0, 140, 200)" },
+  toggleContainer: {
+  display: "flex",
+  marginBottom: "20px",
+  borderRadius: "6px",
+  overflow: "hidden",
+  border: "1px solid #ccc",
+},
+
+toggleButton: {
+  flex: 1,
+  padding: "12px",
+  border: "none",
+  cursor: "pointer",
+  background: "#f5f5f5",
+  fontWeight: "bold",
+  fontSize: "15px",
+},
+
+activeToggle: {
+  backgroundColor: "rgb(0,140,200)",
+  color: "white",
+},
   error: { color: "red", marginTop: "10px" },
 };
 

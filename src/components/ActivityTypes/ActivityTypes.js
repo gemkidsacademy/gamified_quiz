@@ -4,33 +4,60 @@ import "./ActivityTypes.css";
 import AddActivity from "./AddActivity/AddActivity";
 import ManageActivities from "./ManageActivities/ManageActivities";
 
-export default function ActivityTypes() {
+export default function ActivityTypes({ loggedInUser }) {
 
     const [view, setView] = useState("home");
+    const [editingActivity, setEditingActivity] = useState(null);
+    const handleEdit = (activity) => {
+
+    setEditingActivity(activity);
+
+    setView("add");
+
+};
+
+    // -----------------------------------
+    // Add Activity
+    // -----------------------------------
 
     if (view === "add") {
 
         return (
 
             <AddActivity
-                onBack={() => setView("home")}
+                loggedInUser={loggedInUser}
+                editingActivity={editingActivity}
+                onBack={() => {
+
+                    setEditingActivity(null);
+
+                    setView("home");
+
+                }}
             />
 
         );
 
     }
+
+    // -----------------------------------
+    // Manage Activities
+    // -----------------------------------
 
     if (view === "manage") {
 
         return (
 
             <ManageActivities
+                loggedInUser={loggedInUser}
                 onBack={() => setView("home")}
+                onEdit={handleEdit}
             />
 
         );
 
     }
+
 
     return (
 

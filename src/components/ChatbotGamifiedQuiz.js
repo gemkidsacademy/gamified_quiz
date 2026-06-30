@@ -2,27 +2,19 @@ import { useState, useRef, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import "./DemoChatbot.css";
 
-export default function Chatbot_gamified_quiz({ doctorData }) {
+export default function ChatbotGamifiedQuiz({
+    loggedInUser,
+}) {
   // ------------------ State ------------------
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [selectedClass, setSelectedClass] = useState(
-    Array.isArray(doctorData?.class_name) 
-      ? doctorData.class_name[0] 
-      : doctorData?.class_name || ""
-  ); // ✅ track selected class
+  const server = process.env.REACT_APP_API_BASE;
+  
   const [isWaiting, setIsWaiting] = useState(false);
   const [quiz, setQuiz] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const chatEndRef = useRef(null);
-  useEffect(() => {
-    if (doctorData?.class_name) {
-      const className = Array.isArray(doctorData.class_name) 
-        ? doctorData.class_name[0] 
-        : doctorData.class_name;
-      setSelectedClass(className);
-    }
-  }, [doctorData?.class_name]);
+  
 
   // ------------------ Auto-scroll ------------------
   useEffect(() => {
@@ -31,30 +23,39 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
   // ------------------ Welcome message ------------------
   useEffect(() => {
-    console.log("[DEBUG] doctorData changed:", doctorData); // Log the full object
-    if (doctorData?.name) {
-      setMessages([
-        {
-          sender: "bot",
-          text: `Welcome, Dear ${doctorData.name}! Let's begin your weekly quiz.`,
+    console.log("[DEBUG] loggedInUser:", loggedInUser);
 
-          links: [],
-        },
-      ]);
-    }
-  }, [doctorData]);
+      if (loggedInUser?.name) {
+
+          setMessages([
+              {
+                  sender: "bot",
+                  text: `Welcome, Dear ${loggedInUser.name}! Let's begin your weekly quiz.`,
+              },
+          ]);
+
+      }
+
+      }, [loggedInUser]);
 
   // ------------------ Fetch Quiz ------------------
   useEffect(() => {
-  if (!selectedClass) return; // wait for class selection
+  if (!loggedInUser?.student_id) return; // wait for class selection
 
   const fetchQuiz = async () => {
-    console.log("[DEBUG] doctorData changed:", doctorData);
+    console.log("[DEBUG] loggedInUser:", loggedInUser);
     try {
       const response = await fetch(
-        `https://web-production-481a5.up.railway.app/get-quiz?class_name=${encodeURIComponent(
-          selectedClass
-        )}&student_id=${doctorData.student_id}`
+          `${server}/student/current-gamified-quiz`,
+          {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                  student_id: loggedInUser.student_id,
+              }),
+          }
       );
 
       if (!response.ok) throw new Error("Failed to fetch quiz");
@@ -72,12 +73,17 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
       setQuiz(data);
 
-      // Show first question if quiz exists
+      // Show the first quiz question
       if (data?.questions?.length > 0) {
-        setMessages((prev) => [
-          ...prev,
-          { sender: "bot", text: data.questions[0].prompt },
-        ]);
+
+          setMessages((prev) => [
+              ...prev,
+              {
+                  sender: "bot",
+                  text: data.questions[0].prompt,
+              },
+          ]);
+
       }
     } catch (err) {
       console.error("Error fetching quiz:", err);
@@ -89,7 +95,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   };
 
   fetchQuiz();
-}, [selectedClass, doctorData]);
+}, [loggedInUser?.student_id]);
 
   // ------------------ Helpers ------------------
   const parseBoldText = (text) => {
@@ -133,6 +139,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   const handleSubmit = async (e, selectedOption = null) => {
   // Prevent default form submission if event exists
   if (e) e.preventDefault();
+  console.log("Submitting question:", currentQuestionIndex);
 
   // Determine the answer: either from input or selected option
   const studentAnswer = selectedOption || input.trim();
@@ -140,14 +147,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
   // If no answer or quiz not loaded, do nothing
   if (!studentAnswer || !quiz) return;
 
-  // Ensure class is selected
-  if (!selectedClass) {
-    setMessages((prev) => [
-      ...prev,
-      { sender: "bot", text: "Please select your class before starting the quiz." },
-    ]);
-    return;
-  }
+  
 
   // Clear input and show waiting state
   setInput("");
@@ -155,10 +155,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
   try {
     const payload = {
-      student_id: doctorData.student_id,
-      student_name: doctorData.name,
-      class_name: selectedClass,
-      class_day: doctorData.class_day || "",
+      student_id: loggedInUser.student_id,
       question_index: Number(currentQuestionIndex),
       selected_option: studentAnswer,
     };
@@ -166,13 +163,15 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
     console.log("Submitting payload:", payload);
 
     const response = await fetch(
-      "https://web-production-481a5.up.railway.app/submit-quiz-answer",
+      `${server}/student/submit-quiz-answer`,
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
       }
-    );
+  );
 
     if (!response.ok) throw new Error(`Backend error: ${response.status}`);
     const data = await response.json();
@@ -182,7 +181,7 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
     // Move to next question or finish quiz
     const nextIndex = currentQuestionIndex + 1;
-    if (quiz.questions[nextIndex]) {
+    if (quiz?.questions?.[nextIndex]) {
       setMessages((prev) => [
         ...prev,
         { sender: "bot", text: quiz.questions[nextIndex].prompt },
@@ -210,8 +209,8 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 };
 
   // ------------------ Redirect if no doctorData ------------------
-  if (!doctorData?.name) {
-    return <Navigate to="/" replace />;
+  if (!loggedInUser) {
+      return <Navigate to="/" replace />;
   }
 
   // ------------------ Render ------------------
@@ -258,10 +257,24 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
         {/* ------------------ Class Selection & Input ------------------ */}
         {/* ------------------ Class Selection & Quiz Input ------------------ */}
         <form
-        onSubmit={handleSubmit}
-        className="chat-input"
-        style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+            onSubmit={handleSubmit}
+            className="chat-input"
+            style={{ display: "flex", flexDirection: "column", gap: "8px" }}
         >
+
+            {quiz?.questions?.[currentQuestionIndex] && (
+
+                <div
+                    style={{
+                        marginBottom: "10px",
+                        fontWeight: "600",
+                        fontSize: "16px",
+                    }}
+                >
+                    {quiz.questions[currentQuestionIndex].prompt}
+                </div>
+
+            )}
         {/* Class selection before starting the quiz */}
         <>
             {currentQuestionIndex === null && (
@@ -271,43 +284,53 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
             )}
 
             {currentQuestionIndex !== null &&
-            quiz?.questions[currentQuestionIndex]?.options ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {quiz.questions[currentQuestionIndex].options.map((opt, idx) => (
-                    <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleAnswerSelection(opt.split(":")[0])}
-                    disabled={isWaiting}
-                    style={{
-                        padding: "8px 16px",
-                        textAlign: "left",
-                        cursor: isWaiting ? "not-allowed" : "pointer",
-                    }}
-                    >
-                    {opt}
-                    </button>
-                ))}
-                </div>
-            ) : (
-                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <input
-                    type="text"
-                    placeholder="Type your answer..."
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    style={{ flex: 1, padding: "8px" }}
-                    disabled={currentQuestionIndex === null || isWaiting}
-                />
-                <button
-                    type="submit"
-                    style={{ padding: "8px 16px" }}
-                    disabled={currentQuestionIndex === null || isWaiting}
-                >
-                    Submit
-                </button>
-                </div>
-            )}
+            quiz?.questions?.[currentQuestionIndex]?.options ? (
+
+              <div
+                  style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                  }}
+              >
+
+                  {quiz.questions[currentQuestionIndex].options.map((opt, idx) => (
+
+                      <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleAnswerSelection(opt)}
+                          disabled={isWaiting}
+                      >
+                          {opt}
+                      </button>
+
+                  ))}
+
+              </div>
+
+          ) : (
+
+              <div
+                  style={{
+                      display: "flex",
+                      gap: "8px",
+                      alignItems: "center",
+                  }}
+              >
+
+                  <input
+                      type="text"
+                      placeholder="Type your answer..."
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      disabled
+                  />
+
+              </div>
+
+          )
+            }
             </>
 
         </form>

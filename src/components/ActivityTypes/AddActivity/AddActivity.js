@@ -1,40 +1,101 @@
 import React, { useState } from "react";
 import "./AddActivity.css";
 
-export default function AddActivity({ onBack }) {
+export default function AddActivity({
+    loggedInUser,
+    editingActivity,
+    onBack,
+}) {
 
-    const [activityName, setActivityName] = useState("");
+    const server = process.env.REACT_APP_API_BASE;
 
-    const [isEnabled, setIsEnabled] = useState(true);
+    const [activityName, setActivityName] = useState(
+        editingActivity?.activity_name || ""
+    );
 
-    const handleSubmit = (e) => {
+    const [isEnabled, setIsEnabled] = useState(
+        editingActivity?.is_enabled ?? true
+    );
 
-        e.preventDefault();
+    const handleSubmit = async (e) => {
 
-        console.log({
-            activityName,
-            isEnabled
-        });
+    e.preventDefault();
 
-        // TODO:
-        // POST to backend
+    if (!activityName.trim()) {
 
-        alert("Activity created successfully.");
+        alert("Please enter an activity name.");
 
-        setActivityName("");
-        setIsEnabled(true);
+        return;
 
-    };
+    }
 
+    try {
+
+        const url = editingActivity
+            ? `${server}/activity-types/${editingActivity.id}`
+            : `${server}/activity-types`;
+
+        const method = editingActivity
+            ? "PUT"
+            : "POST";
+
+        const res = await fetch(
+            url,
+            {
+                method: method,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    center_code: loggedInUser.center_code,
+                    activity_name: activityName.trim(),
+                    is_enabled: isEnabled,
+                }),
+            }
+        );
+
+        const data = await res.json();
+
+        if (res.ok) {
+
+            alert(data.message);
+
+            setActivityName("");
+            setIsEnabled(true);
+
+            onBack();
+
+        } else {
+
+            alert(data.detail);
+
+        }
+
+    } catch (err) {
+
+        console.error(err);
+
+        alert("Unable to connect to the server.");
+
+    }
+
+};
     return (
 
         <div className="add-activity">
 
-            <h2>Add Activity Type</h2>
+            <h2>
+                {editingActivity
+                    ? "Edit Activity Type"
+                    : "Add Activity Type"}
+            </h2>
 
             <p className="description">
-                Create a new activity type that can be randomly selected
-                by the scheduler when generating gamified quizzes.
+
+                {editingActivity
+                    ? "Modify the activity type and its scheduler status."
+                    : "Create a new activity type that can be randomly selected by the scheduler when generating gamified quizzes."}
+
             </p>
 
             <form onSubmit={handleSubmit}>
@@ -80,7 +141,9 @@ export default function AddActivity({ onBack }) {
                         type="submit"
                         className="save-btn"
                     >
-                        Save Activity
+                        {editingActivity
+                            ? "Update Activity"
+                            : "Save Activity"}
                     </button>
 
                     <button

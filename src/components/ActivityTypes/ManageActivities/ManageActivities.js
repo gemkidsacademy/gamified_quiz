@@ -1,64 +1,143 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./ManageActivities.css";
 
-export default function ManageActivities({ onBack }) {
+export default function ManageActivities({
+    loggedInUser,
+    onBack,
+    onEdit,
+}) {
+
+    const server = process.env.REACT_APP_API_BASE;
 
     const [search, setSearch] = useState("");
 
-    const [activities, setActivities] = useState([
+    const [activities, setActivities] = useState([]);
 
-        {
-            id: 1,
-            name: "Mini Quiz",
-            enabled: true,
-            updated: "27 Jun 2026 06:00 PM"
-        },
+    useEffect(() => {
+        loadActivities();
+    }, []);
 
-        {
-            id: 2,
-            name: "Story + Question",
-            enabled: true,
-            updated: "26 Jun 2026 04:15 PM"
-        },
+    const loadActivities = async () => {
 
-        {
-            id: 3,
-            name: "Logic Puzzle",
-            enabled: false,
-            updated: "25 Jun 2026 08:30 AM"
-        },
+        try {
 
-        {
-            id: 4,
-            name: "Word Scramble",
-            enabled: true,
-            updated: "24 Jun 2026 11:00 AM"
+            const res = await fetch(
+                `${server}/activity-types/list`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        center_code: loggedInUser.center_code,
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok) {
+
+                setActivities(data.activities);
+
+            } else {
+
+                alert(data.detail);
+
+            }
+
+        } catch (err) {
+
+            console.error(err);
+
+            alert("Unable to connect to the server.");
+
         }
 
-    ]);
+    };
 
-    const toggleStatus = (id) => {
+    const toggleStatus = async (activity) => {
 
-        setActivities(
+        try {
 
-            activities.map((activity) =>
+            const res = await fetch(
+                `${server}/activity-types/${activity.id}/status`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        is_enabled: !activity.is_enabled,
+                    }),
+                }
+            );
 
-                activity.id === id
-                    ? {
-                        ...activity,
-                        enabled: !activity.enabled,
-                        updated: new Date().toLocaleString()
-                    }
-                    : activity
+            const data = await res.json();
 
-            )
+            if (res.ok) {
 
-        );
+                loadActivities();
+
+            } else {
+
+                alert(data.detail);
+
+            }
+
+        } catch (err) {
+
+            console.error(err);
+
+            alert("Unable to connect to the server.");
+
+        }
+
+    };
+
+    const deleteActivity = async (id) => {
+
+        if (!window.confirm("Delete this activity?")) {
+            return;
+        }
+
+        try {
+
+            const res = await fetch(
+                `${server}/activity-types/${id}`,
+                {
+                    method: "DELETE",
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok) {
+
+                alert(data.message);
+
+                loadActivities();
+
+            } else {
+
+                alert(data.detail);
+
+            }
+
+        } catch (err) {
+
+            console.error(err);
+
+            alert("Unable to connect to the server.");
+
+        }
 
     };
 
     const filteredActivities = activities.filter((activity) =>
-        activity.name.toLowerCase().includes(search.toLowerCase())
+        activity.activity_name
+            .toLowerCase()
+            .includes(search.toLowerCase())
     );
 
     return (
@@ -116,52 +195,50 @@ export default function ManageActivities({ onBack }) {
 
                         <tr key={activity.id}>
 
+                            <td>{activity.id}</td>
+
+                            <td>{activity.activity_name}</td>
+
                             <td>
 
-                                {activity.id}
+                                {activity.is_enabled ? (
+
+                                    <span className="status-enabled">
+
+                                        Enabled
+
+                                    </span>
+
+                                ) : (
+
+                                    <span className="status-disabled">
+
+                                        Disabled
+
+                                    </span>
+
+                                )}
 
                             </td>
 
-                            <td>
-
-                                {activity.name}
-
-                            </td>
+                            <td>{activity.updated_at}</td>
 
                             <td>
 
-                                <input
-
-                                    type="checkbox"
-
-                                    checked={activity.enabled}
-
-                                    onChange={() =>
-                                        toggleStatus(activity.id)
-                                    }
-
-                                />
-
-                            </td>
-
-                            <td>
-
-                                {activity.updated}
-
-                            </td>
-
-                            <td>
-
-                                <button className="edit-btn">
-
+                                <button
+                                    className="edit-btn"
+                                    onClick={() => onEdit(activity)}
+                                >
                                     Edit
-
                                 </button>
 
-                                <button className="delete-btn">
-
+                                <button
+                                    className="delete-btn"
+                                    onClick={() =>
+                                        deleteActivity(activity.id)
+                                    }
+                                >
                                     Delete
-
                                 </button>
 
                             </td>

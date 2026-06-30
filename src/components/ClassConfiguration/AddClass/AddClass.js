@@ -1,32 +1,207 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./AddClass.css";
 
-export default function AddClass() {
+export default function AddClass({
+    loggedInUser,
+    editingClass,
+    onBack,
+}) {
 
-    const [category, setCategory] = useState("");
-    const [classYear, setClassYear] = useState("");
-    const [classDay, setClassDay] = useState("");
+    const server = process.env.REACT_APP_API_BASE;
+    const [category, setCategory] = useState(
+        editingClass?.category || ""
+    );
 
-    const handleSubmit = (e) => {
+    const [classYear, setClassYear] = useState(
+        editingClass?.year || ""
+    );
 
-        e.preventDefault();
+    const [classDay, setClassDay] = useState(
+        editingClass?.day || ""
+    );
+    const [categories, setCategories] = useState([]);
+    const [classYears, setClassYears] = useState([]);
+    const [classDays, setClassDays] = useState([]);
+    const loadClassDays = async (selectedCategory, selectedYear) => {
 
-        console.log({
-            category,
-            classYear,
-            classDay
-        });
+    try {
 
-        // TODO
-        // POST to backend
+        const res = await fetch(
+            `${server}/class-configuration/class-days`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    center_code: loggedInUser.center_code,
+                    category: selectedCategory,
+                    class_year: selectedYear,
+                }),
+            }
+        );
+
+        const data = await res.json();
+
+        if (res.ok) {
+            setClassDays(data.class_days);
+        }
+
+    } catch (err) {
+        console.error(err);
+    }
+
+};
+    const loadClassYears = async (selectedCategory) => {
+        try {
+
+            const res = await fetch(
+                `${server}/class-configuration/class-years`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        center_code: loggedInUser.center_code,
+                        category: selectedCategory,
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setClassYears(data.class_years);
+            }
+
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    useEffect(() => {
+
+    const initializeForm = async () => {
+
+        await loadCategories();
+
+        if (editingClass) {
+
+            await loadClassYears(editingClass.category);
+
+            await loadClassDays(
+                editingClass.category,
+                editingClass.year
+            );
+
+        }
 
     };
+
+    if (loggedInUser) {
+        initializeForm();
+    }
+
+}, [loggedInUser, editingClass]);
+    
+
+    const loadCategories = async () => {
+        try {
+            const res = await fetch(
+                `${server}/class-configuration/categories`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        center_code: loggedInUser.center_code,
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setCategories(data.categories);
+            }
+
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleSubmit = async (e) => {
+
+    e.preventDefault();
+
+    try {
+
+        const url = editingClass
+            ? `${server}/class-configuration/${editingClass.id}`
+            : `${server}/class-configuration`;
+
+        const method = editingClass ? "PUT" : "POST";
+
+        const res = await fetch(
+            url,
+            {
+                method: method,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    center_code: loggedInUser.center_code,
+                    category: category,
+                    class_year: classYear,
+                    class_day: classDay,
+                }),
+            }
+        );
+
+        const data = await res.json();
+
+        if (res.ok) {
+
+            alert(data.message);
+
+            setCategory("");
+            setClassYear("");
+            setClassDay("");
+
+            setClassYears([]);
+            setClassDays([]);
+
+            await loadCategories();
+
+            if (onBack) {
+                onBack();
+            }
+
+        } else {
+
+            alert(data.detail);
+
+        }
+
+    } catch (err) {
+
+        console.error(err);
+
+        alert("Unable to connect to the server.");
+
+    }
+
+};
 
     return (
 
         <div className="add-class">
 
-            <h2>Add Class</h2>
+            <h2>
+                {editingClass ? "Edit Class" : "Add Class"}
+            </h2>
 
             <p className="description">
                 Create a new teaching class that will later be used by the
@@ -41,15 +216,35 @@ export default function AddClass() {
 
                     <select
                         value={category}
-                        onChange={(e) => setCategory(e.target.value)}
+                        onChange={(e) => {
+
+                            const value = e.target.value;
+
+                            setCategory(value);
+
+                            setClassYear("");
+                            setClassDay("");
+
+                            setClassYears([]);
+                            setClassDays([]);
+
+                            if (value) {
+                                loadClassYears(value);
+                            }
+
+                        }}
                     >
 
                         <option value="">Select Category</option>
 
-                        <option>Foundation</option>
-                        <option>Naplan</option>
-                        <option>OC</option>
-                        <option>Selective</option>
+                        {categories.map((category) => (
+                            <option
+                                key={category}
+                                value={category}
+                            >
+                                {category}
+                            </option>
+                        ))}
 
                     </select>
 
@@ -59,24 +254,36 @@ export default function AddClass() {
 
                     <label>Class Year</label>
 
-                    <select
+                   <select
                         value={classYear}
-                        onChange={(e) => setClassYear(e.target.value)}
+                        disabled={!category}
+                        onChange={(e) => {
+
+                            const value = e.target.value;
+
+                            setClassYear(value);
+
+                            setClassDay("");
+
+                            setClassDays([]);
+
+                            if (value) {
+                                loadClassDays(category, value);
+                            }
+
+                        }}
                     >
 
                         <option value="">Select Class Year</option>
 
-                        <option>Kindergarten</option>
-
-                        <option>Year 1</option>
-                        <option>Year 2</option>
-                        <option>Year 3</option>
-                        <option>Year 4</option>
-                        <option>Year 5</option>
-                        <option>Year 6</option>
-                        <option>Year 7</option>
-                        <option>Year 8</option>
-                        <option>Year 9</option>
+                        {classYears.map((year) => (
+                            <option
+                                key={year}
+                                value={year}
+                            >
+                                {year}
+                            </option>
+                        ))}
 
                     </select>
 
@@ -88,18 +295,20 @@ export default function AddClass() {
 
                     <select
                         value={classDay}
+                        disabled={!classYear}
                         onChange={(e) => setClassDay(e.target.value)}
                     >
 
                         <option value="">Select Day</option>
 
-                        <option>Monday</option>
-                        <option>Tuesday</option>
-                        <option>Wednesday</option>
-                        <option>Thursday</option>
-                        <option>Friday</option>
-                        <option>Saturday</option>
-                        <option>Sunday</option>
+                        {classDays.map((day) => (
+                            <option
+                                key={day}
+                                value={day}
+                            >
+                                {day}
+                            </option>
+                        ))}
 
                     </select>
 
@@ -111,7 +320,7 @@ export default function AddClass() {
                         type="submit"
                         className="save-btn"
                     >
-                        Save Class
+                        {editingClass ? "Edit Class" : "Save Class"}
                     </button>
 
                     <button
