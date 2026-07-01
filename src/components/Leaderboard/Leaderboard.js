@@ -7,6 +7,10 @@ export default function Leaderboard({ loggedInUser }) {
 
     const [terms, setTerms] = useState([]);
 
+    const [categories, setCategories] = useState([]);
+
+    const [selectedCategory, setSelectedCategory] = useState("");
+
     
 
     const [sessions, setSessions] = useState([]);
@@ -21,7 +25,52 @@ export default function Leaderboard({ loggedInUser }) {
 
         loadTerms();
 
+        loadCategories();
+
     }, []);
+    const loadCategories = async () => {
+
+    try {
+
+        const response = await fetch(
+
+            `${API_BASE}/leaderboard/categories`,
+
+            {
+
+                method: "POST",
+
+                headers: {
+
+                    "Content-Type": "application/json",
+
+                },
+
+                body: JSON.stringify({
+
+                    center_code: loggedInUser.center_code,
+
+                }),
+
+            }
+
+        );
+
+        const data = await response.json();
+
+        console.log("Categories:", data);
+
+        setCategories(data);
+
+    }
+
+    catch (err) {
+
+        console.log(err);
+
+    }
+
+};
 
     const loadTerms = async () => {
 
@@ -128,12 +177,19 @@ export default function Leaderboard({ loggedInUser }) {
                         session:
                             selectedSession,
 
+                        category:
+                            selectedCategory,
+
                     }),
 
                 }
             );
 
             const data = await res.json();
+
+            console.log("Status:", res.status);
+
+            console.log("Response:", data);
 
             setLeaderboard(data);
 
@@ -231,6 +287,45 @@ export default function Leaderboard({ loggedInUser }) {
 
                 </div>
 
+                <div>
+
+                    <label>
+
+                        Category
+
+                    </label>
+
+                    <select
+                        value={selectedCategory}
+                        onChange={(e) =>
+                            setSelectedCategory(
+                                e.target.value
+                            )
+                        }
+                    >
+
+                        <option value="">
+
+                            Select
+
+                        </option>
+
+                        {categories.map(category => (
+
+                            <option
+                                key={category}
+                                value={category}
+                            >
+
+                                {category}
+
+                            </option>
+
+                        ))}
+
+                    </select>
+
+                </div>
                 <button
                     onClick={loadLeaderboard}
                 >
