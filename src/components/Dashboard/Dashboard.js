@@ -1,28 +1,114 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./Dashboard.css";
 
-export default function Dashboard() {
+const API_BASE = process.env.REACT_APP_API_BASE;
 
-    // Temporary data.
-    // These values will come from the backend later.
+export default function Dashboard({ loggedInUser }) {
 
-    const dashboard = {
+    const [dashboard, setDashboard] = useState({
 
-        activeTerm: "Term 3 2026",
+        activeTerm: "",
 
-        configuredClasses: 24,
+        configuredClasses: 0,
 
-        enabledActivities: 18,
+        enabledActivities: 0,
 
-        importedTopics: 240,
+        importedTopics: 0,
 
-        schedulerEnabled: true,
+        schedulerEnabled: false,
 
-        nextRun: "Monday 6:00 PM",
+        nextRun: "",
 
-        lastRun: "27 Jun 2026 6:00 PM",
+        lastRun: "",
 
-        lastRunStatus: "Success"
+        lastRunStatus: "",
+
+        systemSummary: []
+
+    });
+
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+
+        if (loggedInUser?.center_code) {
+
+            loadDashboardSummary();
+
+        }
+
+    }, [loggedInUser]);
+
+    const loadDashboardSummary = async () => {
+
+        try {
+
+            setLoading(true);
+
+            const response = await fetch(
+                `${API_BASE}/dashboard/summary`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        center_code: loggedInUser.center_code,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            console.log("Dashboard summary:", data);
+
+            setDashboard({
+
+                activeTerm:
+                    data.academic_term || "Not Configured",
+
+                configuredClasses:
+                    data.configured_classes || 0,
+
+                enabledActivities:
+                    data.enabled_activity_types || 0,
+
+                importedTopics:
+                    data.topics_imported || 0,
+
+                schedulerEnabled:
+                    data.scheduler_enabled || false,
+
+                nextRun:
+                    data.next_scheduled_run || "Not Configured",
+
+                lastRun:
+                    data.last_scheduler_run || "Never",
+
+                lastRunStatus:
+                    data.last_run_result || "Not Run",
+
+                systemSummary:
+                    data.system_summary || []
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Failed to load dashboard summary:",
+                error
+            );
+
+        }
+
+        finally {
+
+            setLoading(false);
+
+        }
 
     };
 
@@ -49,7 +135,9 @@ export default function Dashboard() {
 
                     <h4>Academic Term</h4>
 
-                    <span>{dashboard.activeTerm}</span>
+                    <span>
+                        {loading ? "Loading..." : dashboard.activeTerm}
+                    </span>
 
                 </div>
 
@@ -57,7 +145,9 @@ export default function Dashboard() {
 
                     <h4>Configured Classes</h4>
 
-                    <span>{dashboard.configuredClasses}</span>
+                    <span>
+                        {loading ? "Loading..." : dashboard.configuredClasses}
+                    </span>
 
                 </div>
 
@@ -65,7 +155,9 @@ export default function Dashboard() {
 
                     <h4>Enabled Activity Types</h4>
 
-                    <span>{dashboard.enabledActivities}</span>
+                    <span>
+                        {loading ? "Loading..." : dashboard.enabledActivities}
+                    </span>
 
                 </div>
 
@@ -73,7 +165,9 @@ export default function Dashboard() {
 
                     <h4>Topics Imported</h4>
 
-                    <span>{dashboard.importedTopics}</span>
+                    <span>
+                        {loading ? "Loading..." : dashboard.importedTopics}
+                    </span>
 
                 </div>
 
@@ -81,11 +175,19 @@ export default function Dashboard() {
 
                     <h4>Scheduler</h4>
 
-                    <span className="green">
+                    <span
+                        className={
+                            dashboard.schedulerEnabled
+                                ? "green"
+                                : "orange"
+                        }
+                    >
 
-                        {dashboard.schedulerEnabled
-                            ? "Enabled"
-                            : "Disabled"}
+                        {loading
+                            ? "Loading..."
+                            : dashboard.schedulerEnabled
+                                ? "Enabled"
+                                : "Disabled"}
 
                     </span>
 
@@ -95,7 +197,9 @@ export default function Dashboard() {
 
                     <h4>Next Scheduled Run</h4>
 
-                    <span>{dashboard.nextRun}</span>
+                    <span>
+                        {loading ? "Loading..." : dashboard.nextRun}
+                    </span>
 
                 </div>
 
@@ -103,7 +207,9 @@ export default function Dashboard() {
 
                     <h4>Last Scheduler Run</h4>
 
-                    <span>{dashboard.lastRun}</span>
+                    <span>
+                        {loading ? "Loading..." : dashboard.lastRun}
+                    </span>
 
                 </div>
 
@@ -111,9 +217,17 @@ export default function Dashboard() {
 
                     <h4>Last Run Result</h4>
 
-                    <span className="green">
+                    <span
+                        className={
+                            dashboard.lastRunStatus === "Success"
+                                ? "green"
+                                : dashboard.lastRunStatus === "Failed"
+                                    ? "red"
+                                    : "orange"
+                        }
+                    >
 
-                        {dashboard.lastRunStatus}
+                        {loading ? "Loading..." : dashboard.lastRunStatus}
 
                     </span>
 
@@ -129,42 +243,33 @@ export default function Dashboard() {
 
                 </h3>
 
-                <ul>
+                {loading ? (
 
-                    <li>
+                    <p>Loading summary...</p>
 
-                        One active academic term is configured.
+                ) : dashboard.systemSummary.length === 0 ? (
 
-                    </li>
+                    <p>No summary available.</p>
 
-                    <li>
+                ) : (
 
-                        Classes have been configured and linked
-                        to chatbot student batches.
+                    <ul>
 
-                    </li>
+                        {dashboard.systemSummary.map(
+                            (item, index) => (
 
-                    <li>
+                                <li key={index}>
 
-                        Session topics have been imported successfully.
+                                    {item}
 
-                    </li>
+                                </li>
 
-                    <li>
+                            )
+                        )}
 
-                        Enabled activity types are available
-                        for random selection.
+                    </ul>
 
-                    </li>
-
-                    <li>
-
-                        The scheduler is configured and ready
-                        to generate quizzes.
-
-                    </li>
-
-                </ul>
+                )}
 
             </div>
 

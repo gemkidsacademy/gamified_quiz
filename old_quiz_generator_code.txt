@@ -1,0 +1,373 @@
+@app.post("/scheduler/run")
+def run_scheduler(
+    request: RunSchedulerRequest,
+    db: Session = Depends(get_db)
+):
+
+    print("\n==============================")
+    print("SCHEDULER STARTED")
+    print("==============================")
+
+    # ------------------------------------
+    # Load Scheduler Configuration
+    # ------------------------------------
+
+    configuration = (
+        db.query(SchedulerConfiguration)
+        .filter(
+            SchedulerConfiguration.center_code == request.center_code
+        )
+        .first()
+    )
+
+    if not configuration:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Scheduler configuration not found."
+        )
+
+    print("Scheduler configuration loaded.")
+
+    # ------------------------------------
+    # Check Scheduler Enabled
+    # ------------------------------------
+
+    if not configuration.scheduler_enabled:
+
+        return {
+            "message": "Scheduler is disabled."
+        }
+
+    print("Scheduler is enabled.")
+
+    # ------------------------------------
+    # Check Today
+    # ------------------------------------
+
+    today = datetime.today().strftime("%A").lower()
+
+    print(f"Today is: {today}")
+
+    run_today = getattr(configuration, today)
+
+    if not run_today:
+
+        return {
+            "message": f"Scheduler is not configured to run on {today.title()}."
+        }
+
+    print("Today is a scheduled run day.")
+
+    # ------------------------------------
+    # Load Active Academic Term
+    # ------------------------------------
+
+    term = (
+        db.query(AcademicTerm)
+        .filter(
+            AcademicTerm.center_code == request.center_code,
+            AcademicTerm.is_active == True
+        )
+        .first()
+    )
+
+    if not term:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Active academic term not found."
+        )
+
+    print(f"Academic Term: {term.term_name}")
+
+    # ------------------------------------
+    # Calculate Current Session
+    # ------------------------------------
+
+    today_date = datetime.today().date()
+
+    days_elapsed = (today_date - term.start_date).days
+
+    current_session = (days_elapsed // 7) + 1
+
+    print(f"Current Session: {current_session}")
+    # ------------------------------------
+    # Load Configured Classes
+    # ------------------------------------
+
+    classes = (
+        db.query(ClassConfiguration)
+        .filter(
+            ClassConfiguration.center_code == request.center_code
+        )
+        .all()
+    )
+
+    print(f"\nConfigured Classes: {len(classes)}")
+    # ------------------------------------
+    # Load Enabled Activity Types
+    # ------------------------------------
+
+    enabled_activities = (
+        db.query(ActivityType)
+        .filter(
+            ActivityType.center_code == request.center_code,
+            ActivityType.is_enabled == True
+        )
+        .all()
+    )
+
+    if not enabled_activities:
+
+        raise HTTPException(
+            status_code=400,
+            detail="No enabled activity types found."
+        )
+
+    print(f"\nEnabled Activities: {len(enabled_activities)}")
+    # ------------------------------------
+    # Load Franchise Location
+    # ------------------------------------
+
+    row = db.execute(
+        select(FranchiseLocation)
+    ).scalar_one_or_none()
+
+    if row:
+
+        country = row.country
+
+        state = row.state
+
+    else:
+
+        country = "Australia"
+
+        state = "NSW"
+
+    for cls in classes:
+
+        print("--------------------------------")
+
+        print(f"Category   : {cls.category}")
+
+        print(f"Class Year : {cls.class_year}")
+
+        print(f"Class Day  : {cls.class_day}")
+
+        # ------------------------------------
+        # Find Topic for Current Session
+        # ------------------------------------
+
+        topic = (
+            db.query(SessionTopic)
+            .filter(
+                SessionTopic.center_code == request.center_code,
+                SessionTopic.category == cls.category,
+                SessionTopic.class_year == cls.class_year,
+                SessionTopic.class_day == cls.class_day,
+                SessionTopic.session == current_session,
+            )
+            .first()
+        )
+
+        if not topic:
+
+            print("Topic      : NOT FOUND")
+
+            continue
+
+        print(f"Session    : {topic.session}")
+
+        print(f"Topic      : {topic.topic}")
+
+        # ------------------------------------
+        # Randomly Select Activity
+        # ------------------------------------
+
+        selected_activity = random.choice(
+            enabled_activities
+        )
+
+        print(
+            f"Activity   : "
+            f"{selected_activity.activity_name}"
+        )
+        category = cls.category
+
+        class_year = cls.class_year
+
+        class_day = cls.class_day
+
+        topic_name = topic.topic
+
+        activity_type = selected_activity.activity_name
+
+        print("\n----- GPT INPUT -----")
+        print(f"Category      : {category}")
+        print(f"Year          : {class_year}")
+        print(f"Day           : {class_day}")
+        print(f"Session       : {current_session}")
+        print(f"Topic         : {topic_name}")
+        print(f"Activity Type : {activity_type}")
+        print("----------------------")
+        # ------------------------------------
+        # Build GPT Prompt
+        # ------------------------------------
+
+        system_prompt = '''
+        You are an expert quiz-generating AI and a creative educator.
+
+        Create a gamified quiz for {country}, {state}, {category}, {class_year} students.
+
+        Topic:
+        {topic_name}
+
+        Activity Type:
+        {activity_type}
+
+        Return ONLY one valid JSON object.
+
+        The JSON MUST have exactly this structure:
+
+        {{
+            "quiz_title": "Quiz Title",
+            "instructions": "Instructions",
+            "questions": [
+                {{
+                    "category": "{topic_name}",
+                    "prompt": "Question",
+                    "options": [
+                        "A) Option 1",
+                        "B) Option 2",
+                        "C) Option 3",
+                        "D) Option 4"
+                    ],
+                    "answer": "A) Option 1"
+                }}
+            ]
+        }}
+
+        Generate exactly FIVE questions.
+
+        Each question must:
+
+        - contain ONE clear question.
+        - have exactly FOUR options.
+        - have exactly ONE correct answer.
+        - be suitable for {class_year} students.
+
+        IMPORTANT:
+
+        - The "answer" field MUST contain the COMPLETE correct option text.
+        - The answer MUST exactly match one of the strings in the "options" array.
+        - Do NOT return only the letter such as "A", "B", "C", or "D".
+        - For example, if the correct option is "A) Sydney", then the answer MUST be:
+        "answer": "A) Sydney"
+
+        The activity type MUST influence the style of the questions.
+        '''.format(
+            country=country,
+            state=state,
+            category=category,
+            class_year=class_year,
+            topic_name=topic_name,
+            activity_type=activity_type,
+        )
+
+        # ------------------------------------
+        # Call GPT
+        # ------------------------------------
+
+        parsed_json = None
+
+        try:
+
+            print("\nCalling GPT...")
+
+            response = client.chat.completions.create(
+
+                model="gpt-4o-mini",
+
+                messages=[
+                    {
+                        "role": "system",
+                        "content": system_prompt
+                    }
+                ],
+
+                temperature=0.5
+
+            )
+
+            quiz_text = response.choices[0].message.content.strip()
+
+            print("\n========== RAW GPT RESPONSE ==========")
+
+            print(quiz_text)
+
+            print("======================================")
+
+            parsed_json = json.loads(quiz_text)
+            generated_quiz = GeneratedGamifiedQuiz(
+
+                center_code=request.center_code,
+
+                category=category,
+
+                class_year=class_year,
+
+                class_day=class_day,
+
+                session=current_session,
+
+                topic=topic_name,
+
+                activity_type=activity_type,
+
+                quiz_json=parsed_json
+
+            )
+
+            db.add(generated_quiz)
+
+            print("\n✅ JSON parsed successfully.")
+
+            print(f"Quiz Title : {parsed_json['quiz_title']}")
+
+            print(f"Questions  : {len(parsed_json['questions'])}")
+
+        except json.JSONDecodeError as e:
+
+            print("\n❌ JSON parsing failed")
+
+            print(e)
+
+        except Exception as e:
+
+            print("\n❌ GPT call failed")
+
+            print(e)
+    
+    db.commit()
+
+    print("\n=================================")
+    print("ALL GENERATED QUIZZES SAVED")
+    print("=================================")
+
+    return {
+
+        "message": "Scheduler initialisation successful.",
+
+        "current_session": current_session,
+
+        "today": today.title(),
+
+        "term": term.term_name
+
+    }
+
+
+
+pip freeze > requirements.txt

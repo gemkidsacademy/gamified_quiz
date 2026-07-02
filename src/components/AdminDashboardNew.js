@@ -95,7 +95,7 @@ export default function AdminDashboardNew({ loggedInUser })  {
       <div className="tab-content">
         {activeTab === "dashboard" && (
           <div className="tab-panel">
-            <Dashboard />
+            <Dashboard loggedInUser={loggedInUser} />
           </div>
         )}
 

@@ -239,21 +239,13 @@ export default function ConfigureScheduler({
             <div className="form-group">
 
                 <label>
-
-                    Run Time
-
+                Run Time
                 </label>
 
                 <input
-
-                    type="time"
-
-                    value={runTime}
-
-                    onChange={(e) =>
-                        setRunTime(e.target.value)
-                    }
-
+                type="time"
+                value="18:00"
+                disabled
                 />
 
             </div>
@@ -330,56 +322,11 @@ export default function ConfigureScheduler({
                     ▶ Run Scheduler Now
                 </button>
 
-                <button
-                    className="back-btn"
-                    onClick={onBack}
-                >
-                    Back
-                </button>
+                
 
             </div>
 
-            <div className="assumption-box">
-
-                <h3>
-
-                    Implementation Assumption (Please Confirm)
-
-                </h3>
-
-                <ul>
-
-                    <li>The scheduler runs only when it is enabled.</li>
-
-                    <li>
-                        It executes at the configured time using the
-                        academy's local time zone.
-                    </li>
-
-                    <li>
-                        It only runs on the selected days.
-                    </li>
-
-                    <li>
-                        During execution, it determines the current
-                        academic session from the configured term.
-                    </li>
-
-                    <li>
-                        It retrieves the corresponding session topic,
-                        randomly selects one enabled activity type,
-                        and generates a gamified quiz.
-                    </li>
-
-                    <li>
-                        Generated quizzes become available to students
-                        belonging to the matching Category →
-                        Class Year → Class Day.
-                    </li>
-
-                </ul>
-
-            </div>
+            
 
         </div>
 

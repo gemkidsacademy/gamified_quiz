@@ -27,6 +27,7 @@ function LoginPage({ setIsLoggedIn, setLoggedInUser }) {
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  
 
   const [timer, setTimer] = useState(0);
   const [error, setError] = useState("");
@@ -329,8 +330,13 @@ function LoginPage({ setIsLoggedIn, setLoggedInUser }) {
     </button>
   </>
 )}
-        {loginMode === "student" && (
-          <>
+       {loginMode === "student" && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleStudentLogin();
+            }}
+          >
             <h2>Login With ID/Password</h2>
 
             <input
@@ -349,15 +355,15 @@ function LoginPage({ setIsLoggedIn, setLoggedInUser }) {
             />
 
             <button
+              type="submit"
               style={{
                 ...styles.button,
                 backgroundColor: "#28a745",
               }}
-              onClick={handleStudentLogin}
             >
               Login
             </button>
-          </>
+          </form>
         )}
 
         {error && <p style={styles.error}>{error}</p>}
