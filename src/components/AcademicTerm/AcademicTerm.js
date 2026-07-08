@@ -1,179 +1,104 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import "./AcademicTerm.css";
 
+import AddTerm from "./AddTerm/AddTerm";
+import ManageTerms from "./ManageTerms/ManageTerms";
+
 export default function AcademicTerm({ loggedInUser }) {
-  const server = process.env.REACT_APP_API_BASE;
+  const [view, setView] = useState("home");
 
-  const [termName, setTermName] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-
-  const [currentTerm, setCurrentTerm] = useState(null);
-  const [loadingTerm, setLoadingTerm] = useState(false);
-
-  useEffect(() => {
-  if (loggedInUser?.center_code) {
-    handleViewCurrentTerm();
-  }
-}, [loggedInUser]);
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-
-    try {
-      const res = await fetch(`${server}/academic-term-gamified`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          center_code: loggedInUser.center_code,
-          term_name: termName,
-          start_date: startDate,
-          end_date: endDate,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        alert("Academic term saved successfully.");
-
-        setTermName("");
-        setStartDate("");
-        setEndDate("");
-
-        // Optionally render saved term immediately if backend returns it
-        setCurrentTerm(data);
-      } else {
-        alert(data.detail || "Failed to save academic term.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Unable to connect to the server.");
-    }
-  };
-
-  const handleViewCurrentTerm = async () => {
-  try {
-    setLoadingTerm(true);
-
-    const res = await fetch(
-      `${server}/academic-term-gamified/${loggedInUser.center_code}`
+  if (view === "add") {
+    return (
+      <AddTerm
+        loggedInUser={loggedInUser}
+        onBack={() => setView("home")}
+      />
     );
-
-    const data = await res.json();
-
-    if (res.ok) {
-      setCurrentTerm(data);
-
-      // Populate the form with the row values
-      setTermName(data.term_name || "");
-      setStartDate(data.start_date || "");
-      setEndDate(data.end_date || "");
-    } else {
-      alert(data.detail || "No academic term found.");
-      setCurrentTerm(null);
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Unable to fetch academic term.");
-    setCurrentTerm(null);
-  } finally {
-    setLoadingTerm(false);
   }
-};
+
+  if (view === "manage") {
+    return (
+      <ManageTerms
+        loggedInUser={loggedInUser}
+        onBack={() => setView("home")}
+      />
+    );
+  }
 
   return (
-    <div className="academic-term">
-      <h2>Academic Term</h2>
+    <div className="academic-term-home">
+      <h2>Academic Terms</h2>
 
-      <p className="description">
-        Configure the academic term. The system will automatically calculate
-        the number of weeks between the start and end dates and create the
-        corresponding learning sessions.
+      <p className="page-description">
+        Create and manage academic terms used by the Gamified Quiz module.
+        Multiple terms can be created for the centre, but only one term is
+        treated as the current active term at any time.
       </p>
 
-      <form onSubmit={handleSave}>
-        <div className="form-group">
-          <label>Term Name</label>
-          <input
-            type="text"
-            placeholder="e.g. Term 1 2026"
-            value={termName}
-            onChange={(e) => setTermName(e.target.value)}
-          />
-        </div>
+      <div className="card-grid">
+        {/* Add Term */}
+        <div
+          className="action-card"
+          onClick={() => setView("add")}
+        >
+          <div className="card-icon">➕</div>
 
-        <div className="form-group">
-          <label>Term Start Date</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
+          <h3>Add Term</h3>
 
-        <div className="form-group">
-          <label>Term End Date</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
+          <p>
+            Create a new academic term by entering the term name,
+            start date and end date.
+          </p>
 
-        <div className="academic-term-actions">
-          <button
-            type="submit"
-            className="save-btn"
-            disabled={!!currentTerm}
-          >
-            Save Academic Term
-          </button>
-
-          <button
-            type="button"
-            className="view-btn"
-            onClick={handleViewCurrentTerm}
-          >
-            {loadingTerm ? "Loading..." : "View Current Term"}
+          <button className="card-btn">
+            Add Term
           </button>
         </div>
-      </form>
 
-      {currentTerm && (
-        <div className="current-term-card">
-          <h3>Current Academic Term</h3>
+        {/* Manage Terms */}
+        <div
+          className="action-card"
+          onClick={() => setView("manage")}
+        >
+          <div className="card-icon">📅</div>
 
-          <div className="current-term-row">
-            <span className="label">Term Name:</span>
-            <span>{currentTerm.term_name}</span>
-          </div>
+          <h3>Manage Terms</h3>
 
-          <div className="current-term-row">
-            <span className="label">Start Date:</span>
-            <span>{currentTerm.start_date}</span>
-          </div>
+          <p>
+            View all academic terms, edit their details, delete terms,
+            and choose which term should be the current active term.
+          </p>
 
-          <div className="current-term-row">
-            <span className="label">End Date:</span>
-            <span>{currentTerm.end_date}</span>
-          </div>
-
-          <div className="current-term-row">
-            <span className="label">Number of Weeks:</span>
-            <span>{currentTerm.number_of_weeks}</span>
-          </div>
-
-          <div className="current-term-row">
-            <span className="label">Is Active:</span>
-            <span>{currentTerm.is_active ? "Yes" : "No"}</span>
-          </div>
-
-          
+          <button className="card-btn">
+            Manage Terms
+          </button>
         </div>
-      )}
+      </div>
+
+      <div className="assumption-box">
+        <h3>Implementation Assumption (Please Confirm)</h3>
+
+        <ul>
+          <li>
+            Multiple academic terms can exist for the same centre.
+          </li>
+
+          <li>
+            Only <strong>one academic term</strong> is treated as the
+            <strong> current active term</strong> at any given time.
+          </li>
+
+          <li>
+            The scheduler uses the <strong>current active term</strong> to
+            calculate the current learning week and retrieve the relevant session.
+          </li>
+
+          <li>
+            The backend automatically calculates the number of weeks for each term
+            from its start and end dates.
+          </li>
+        </ul>
+      </div>
     </div>
   );
-} 
+}

@@ -1,177 +1,237 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./SessionTopicsImport.css";
 
 import DownloadTemplate from "./DownloadTemplate/DownloadTemplate";
 import UploadTopics from "./UploadTopics/UploadTopics";
 
 export default function SessionTopicsImport({ loggedInUser }) {
+    const server = process.env.REACT_APP_API_BASE;
 
     const [view, setView] = useState("home");
 
-    // -------------------------
+    const [terms, setTerms] = useState([]);
+    const [selectedTermId, setSelectedTermId] = useState("");
+    const [selectedTerm, setSelectedTerm] = useState(null);
+
+    // ---------------------------------------
+    // Load academic terms for this center
+    // ---------------------------------------
+    const loadTerms = async () => {
+        try {
+            const res = await fetch(
+                `${server}/academic-terms/list`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        center_code: loggedInUser.center_code,
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok) {
+                const termList = Array.isArray(data) ? data : [];
+
+                setTerms(termList);
+
+                // Admin chooses the term manually for session-topic planning
+                setSelectedTermId("");
+                setSelectedTerm(null);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    useEffect(() => {
+        if (loggedInUser?.center_code) {
+            loadTerms();
+        }
+    }, [loggedInUser]);
+
+    const handleTermChange = (e) => {
+        const value = e.target.value;
+        setSelectedTermId(value);
+
+        const matchedTerm = terms.find(
+            (term) => String(term.id) === value
+        );
+
+        setSelectedTerm(matchedTerm || null);
+    };
+
+    const handleBackToHome = () => {
+        setView("home");
+    };
+
+    // ---------------------------------------
     // Download CSV Screen
-    // -------------------------
-
+    // ---------------------------------------
     if (view === "download") {
-
         return (
             <DownloadTemplate
                 loggedInUser={loggedInUser}
-                onBack={() => setView("home")}
+                selectedTerm={selectedTerm}
+                onBack={handleBackToHome}
             />
         );
-
     }
 
-    // -------------------------
+    // ---------------------------------------
     // Upload CSV Screen
-    // -------------------------
-
+    // ---------------------------------------
     if (view === "upload") {
-
         return (
             <UploadTopics
                 loggedInUser={loggedInUser}
-                onBack={() => setView("home")}
+                selectedTerm={selectedTerm}
+                onBack={handleBackToHome}
             />
         );
-
     }
 
-
     return (
-
         <div className="session-topics">
-
             <h2>Session Topics</h2>
 
             <p className="page-description">
-
-                Import session topics using a CSV file.
-                Download the automatically generated template,
-                populate the <strong>Topic</strong> column,
-                then upload the completed CSV.
-
+                Import session topics for a selected academic term using a CSV file.
+                Download the automatically generated template, populate the
+                <strong> Topic</strong> column, then upload the completed CSV.
             </p>
 
-            <div className="card-grid">
+            {/* Term Selector */}
+            <div className="term-selector-box">
+                <label className="term-label">Academic Term</label>
 
-                {/* Download Template */}
-
-                <div
-                    className="action-card"
-                    onClick={() => setView("download")}
+                <select
+                    value={selectedTermId}
+                    onChange={handleTermChange}
+                    className="term-select"
                 >
+                    <option value="">Select Academic Term</option>
 
+                    {terms.map((term) => (
+                        <option key={term.id} value={term.id}>
+                            {term.term_name}
+                        </option>
+                    ))}
+                </select>
+
+                {!selectedTerm && (
+                    <p className="term-warning">
+                        Please select an academic term before downloading or uploading session topics.
+                    </p>
+                )}
+            </div>
+
+            <div className="card-grid">
+                {/* Download Template */}
+                <div
+                    className={`action-card ${!selectedTerm ? "disabled-card" : ""}`}
+                    onClick={() => {
+                        if (!selectedTerm) return;
+                        setView("download");
+                    }}
+                >
                     <div className="card-icon">
-
                         📥
-
                     </div>
 
                     <h3>
-
                         Download CSV
-
                     </h3>
 
                     <p>
-
-                        Download a CSV template containing
-                        all configured classes together
-                        with every generated session.
-
+                        Download a CSV template for the selected academic term
+                        containing all configured classes together with every generated session.
                     </p>
 
-                    <button className="card-btn">
-
+                    <button
+                        className="card-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (!selectedTerm) return;
+                            setView("download");
+                        }}
+                        disabled={!selectedTerm}
+                    >
                         Download Template
-
                     </button>
-
                 </div>
 
                 {/* Upload CSV */}
-
                 <div
-                    className="action-card"
-                    onClick={() => setView("upload")}
+                    className={`action-card ${!selectedTerm ? "disabled-card" : ""}`}
+                    onClick={() => {
+                        if (!selectedTerm) return;
+                        setView("upload");
+                    }}
                 >
-
                     <div className="card-icon">
-
                         📤
-
                     </div>
 
                     <h3>
-
                         Upload CSV
-
                     </h3>
 
                     <p>
-
-                        Upload the completed CSV after
-                        filling in the Topic column.
-
+                        Upload the completed CSV for the selected academic term
+                        after filling in the Topic column.
                     </p>
 
-                    <button className="card-btn">
-
+                    <button
+                        className="card-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (!selectedTerm) return;
+                            setView("upload");
+                        }}
+                        disabled={!selectedTerm}
+                    >
                         Upload Topics
-
                     </button>
-
                 </div>
-
             </div>
 
             <div className="assumption-box">
-
-                <h3>
-
-                    Implementation Assumption (Please Confirm)
-
-                </h3>
+                <h3>Implementation Assumption (Please Confirm)</h3>
 
                 <ul>
-
                     <li>
-
-                        The system generates a CSV template
-                        containing every configured class and
-                        every automatically generated session.
-
+                        Session topics are maintained separately for each academic term.
                     </li>
 
                     <li>
-
-                        The administrator only completes
-                        the <strong>Topic</strong> column.
-
+                        The administrator first selects the academic term,
+                        then downloads a CSV template specifically for that term.
                     </li>
 
                     <li>
-
-                        Uploading the completed CSV stores
-                        all topic mappings in the database.
-
+                        The system generates a CSV template containing every configured
+                        class for the selected term together with every session row.
                     </li>
 
                     <li>
+                        The administrator only completes the <strong>Topic</strong> column.
+                    </li>
 
-                        The scheduler retrieves these topics
+                    <li>
+                        Uploading the completed CSV stores topic mappings against the
+                        selected academic term.
+                    </li>
+
+                    <li>
+                        The scheduler later retrieves topics for the active runtime term
                         when generating gamified quizzes.
-
                     </li>
-
                 </ul>
-
             </div>
-
         </div>
-
     );
-
 }

@@ -11,6 +11,7 @@ export default function ChatbotGamifiedQuiz({
   const server = process.env.REACT_APP_API_BASE;
   
   const [isWaiting, setIsWaiting] = useState(false);
+  const hasFetchedQuizRef = useRef(false);
   const [quiz, setQuiz] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const chatEndRef = useRef(null);
@@ -40,50 +41,51 @@ export default function ChatbotGamifiedQuiz({
 
   // ------------------ Fetch Quiz ------------------
   useEffect(() => {
-  if (!loggedInUser?.student_id) return; // wait for class selection
+  if (!loggedInUser?.student_id) return;
+
+  if (hasFetchedQuizRef.current) return;
+  hasFetchedQuizRef.current = true;
 
   const fetchQuiz = async () => {
     console.log("[DEBUG] loggedInUser:", loggedInUser);
     try {
-      const response = await fetch(
-          `${server}/student/current-gamified-quiz`,
-          {
-              method: "POST",
-              headers: {
-                  "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                  student_id: loggedInUser.student_id,
-              }),
-          }
-      );
+      const response = await fetch(`${server}/student/current-gamified-quiz`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          student_id: loggedInUser.student_id,
+        }),
+      });
 
       if (!response.ok) throw new Error("Failed to fetch quiz");
 
       const data = await response.json();
 
-      // Check if backend sent a "already attempted" message
       if (data.message === "You have already attempted this week's quiz.") {
-        setMessages((prev) => [
-          ...prev,
-          { sender: "bot", text: data.message },
-        ]);
-        return; // stop further quiz display
+        setMessages((prev) => {
+          const alreadyExists = prev.some(
+            (msg) => msg.sender === "bot" && msg.text === data.message
+          );
+
+          if (alreadyExists) return prev;
+
+          return [...prev, { sender: "bot", text: data.message }];
+        });
+        return;
       }
 
       setQuiz(data);
 
-      // Show the first quiz question
       if (data?.questions?.length > 0) {
-
-          setMessages((prev) => [
-              ...prev,
-              {
-                  sender: "bot",
-                  text: data.questions[0].prompt,
-              },
-          ]);
-
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: data.questions[0].prompt,
+          },
+        ]);
       }
     } catch (err) {
       console.error("Error fetching quiz:", err);
@@ -95,7 +97,7 @@ export default function ChatbotGamifiedQuiz({
   };
 
   fetchQuiz();
-}, [loggedInUser?.student_id]);
+}, [loggedInUser?.student_id, server]);
 
   // ------------------ Helpers ------------------
   const parseBoldText = (text) => {
@@ -262,19 +264,7 @@ export default function ChatbotGamifiedQuiz({
             style={{ display: "flex", flexDirection: "column", gap: "8px" }}
         >
 
-            {quiz?.questions?.[currentQuestionIndex] && (
-
-                <div
-                    style={{
-                        marginBottom: "10px",
-                        fontWeight: "600",
-                        fontSize: "16px",
-                    }}
-                >
-                    {quiz.questions[currentQuestionIndex].prompt}
-                </div>
-
-            )}
+            
         {/* Class selection before starting the quiz */}
         <>
             {currentQuestionIndex === null && (

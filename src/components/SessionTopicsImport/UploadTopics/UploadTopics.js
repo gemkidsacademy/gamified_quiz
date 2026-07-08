@@ -3,6 +3,7 @@ import "./UploadTopics.css";
 
 export default function UploadTopics({
     loggedInUser,
+    selectedTerm,
     onBack,
 }) {
 
@@ -11,60 +12,64 @@ export default function UploadTopics({
     const [file, setFile] = useState(null);
 
     const handleUpload = async () => {
+    if (!selectedTerm || !selectedTerm.id) {
+        alert("Please select an academic term first.");
+        return;
+    }
 
-        if (!file) {
+    if (!file) {
+        alert("Please select a CSV file.");
+        return;
+    }
 
-            alert("Please select a CSV file.");
+    try {
+        const formData = new FormData();
 
-            return;
+        formData.append(
+            "center_code",
+            loggedInUser.center_code
+        );
 
-        }
+        formData.append(
+            "term_id",
+            String(selectedTerm.id)
+        );
 
-        try {
+        formData.append(
+            "term_name",
+            selectedTerm.term_name
+        );
 
-            const formData = new FormData();
+        formData.append(
+            "file",
+            file
+        );
 
-            formData.append(
-                "center_code",
-                loggedInUser.center_code
-            );
-
-            formData.append(
-                "file",
-                file
-            );
-
-            const res = await fetch(
-                `${server}/session-topics/upload`,
-                {
-                    method: "POST",
-                    body: formData,
-                }
-            );
-
-            const data = await res.json();
-
-            if (res.ok) {
-
-                alert(data.message);
-
-                setFile(null);
-
-            } else {
-
-                alert(data.detail);
-
+        const res = await fetch(
+            `${server}/session-topics/upload`,
+            {
+                method: "POST",
+                body: formData,
             }
+        );
 
-        } catch (err) {
+        const data = await res.json();
 
-            console.error(err);
-
-            alert("Unable to upload CSV.");
-
+        if (res.ok) {
+            alert(data.message || "Topics uploaded successfully.");
+            setFile(null);
+        } else {
+            alert(
+                typeof data.detail === "string"
+                    ? data.detail
+                    : JSON.stringify(data.detail, null, 2)
+            );
         }
-
-    };
+    } catch (err) {
+        console.error(err);
+        alert("Unable to upload CSV.");
+    }
+};
 
     return (
 

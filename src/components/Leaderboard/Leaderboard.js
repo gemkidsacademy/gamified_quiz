@@ -132,10 +132,8 @@ export default function Leaderboard({ loggedInUser }) {
 
     const list = [];
 
-    for (let i = 1; i <= selected.weeks; i++) {
-
+    for (let i = 1; i <= selected.number_of_weeks; i++) {
         list.push(i);
-
     }
 
     setSessions(list);

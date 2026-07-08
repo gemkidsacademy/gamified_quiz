@@ -1,171 +1,518 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./ManageClasses.css";
 
 export default function ManageClasses({
     loggedInUser,
-    onEdit,
+    selectedTerm,
+    onBack,
 }) {
     const server = process.env.REACT_APP_API_BASE;
 
+    const [classes, setClasses] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
 
-    // Temporary data
-    const [classes, setClasses] = useState([]);
+    // inline edit state
+    const [editingClassId, setEditingClassId] = useState(null);
+    const [editForm, setEditForm] = useState({
+        category: "",
+        class_year: "",
+        class_day: "",
+    });
 
+    // dropdown data for edit mode
+    const [categories, setCategories] = useState([]);
+    const [classYears, setClassYears] = useState([]);
+    const [classDays, setClassDays] = useState([]);
+
+    // ---------------------------------------
+    // Load configured classes for selected term
+    // ---------------------------------------
+    const loadClasses = async () => {
+        if (!selectedTerm?.id) {
+            setClasses([]);
+            setLoading(false);
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const res = await fetch(
+                `${server}/class-configuration/list`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        center_code: loggedInUser.center_code,
+                        term_id: selectedTerm.id,
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setClasses(data.classes || []);
+            } else {
+                setClasses([]);
+                alert(data.detail || "Failed to load classes.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Unable to fetch class configurations.");
+            setClasses([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // ---------------------------------------
+    // Load dropdown options
+    // ---------------------------------------
+    const loadCategories = async () => {
+        try {
+            const res = await fetch(
+                `${server}/class-configuration/categories`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        center_code: loggedInUser.center_code,
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setCategories(data.categories || []);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const loadClassYears = async (selectedCategory) => {
+        if (!selectedCategory) {
+            setClassYears([]);
+            return;
+        }
+
+        try {
+            const res = await fetch(
+                `${server}/class-configuration/class-years`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        center_code: loggedInUser.center_code,
+                        category: selectedCategory,
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setClassYears(data.class_years || []);
+            } else {
+                setClassYears([]);
+            }
+        } catch (err) {
+            console.error(err);
+            setClassYears([]);
+        }
+    };
+
+    const loadClassDays = async (selectedCategory, selectedYear) => {
+        if (!selectedCategory || !selectedYear) {
+            setClassDays([]);
+            return;
+        }
+
+        try {
+            const res = await fetch(
+                `${server}/class-configuration/class-days`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        center_code: loggedInUser.center_code,
+                        category: selectedCategory,
+                        class_year: selectedYear,
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setClassDays(data.class_days || []);
+            } else {
+                setClassDays([]);
+            }
+        } catch (err) {
+            console.error(err);
+            setClassDays([]);
+        }
+    };
+
+    useEffect(() => {
+        if (loggedInUser && selectedTerm) {
+            loadClasses();
+            loadCategories();
+        } else {
+            setClasses([]);
+            setLoading(false);
+        }
+    }, [loggedInUser, selectedTerm]);
+
+    // ---------------------------------------
+    // Search filter
+    // ---------------------------------------
     const filteredClasses = classes.filter((item) =>
         `${item.category} ${item.year} ${item.day}`
             .toLowerCase()
             .includes(search.toLowerCase())
     );
-    useEffect(() => {
-        loadClasses();
-    }, []);
-  const loadClasses = async () => {
 
-    try {
+    // ---------------------------------------
+    // Start inline edit
+    // ---------------------------------------
+    const startEdit = async (item) => {
+        setEditingClassId(item.id);
 
-        const res = await fetch(
-            `${server}/class-configuration/list`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    center_code: loggedInUser.center_code,
-                }),
-            }
+        setEditForm({
+            category: item.category || "",
+            class_year: item.class_year || item.year || "",
+            class_day: item.class_day || item.day || "",
+        });
+
+        await loadClassYears(item.category);
+        await loadClassDays(
+            item.category,
+            item.class_year || item.year || ""
         );
+    };
 
-        const data = await res.json();
+    const cancelEdit = () => {
+        setEditingClassId(null);
+        setEditForm({
+            category: "",
+            class_year: "",
+            class_day: "",
+        });
+        setClassYears([]);
+        setClassDays([]);
+    };
 
-        if (res.ok) {
-            setClasses(data.classes);
+    // ---------------------------------------
+    // Update class configuration
+    // ---------------------------------------
+    const handleUpdate = async (classId) => {
+        if (!selectedTerm?.id) {
+            alert("Please select an academic term first.");
+            return;
         }
 
-    } catch (err) {
-        console.error(err);
-    }
-
-};
-const deleteClass = async (id) => {
-
-    if (!window.confirm("Delete this class?")) {
-        return;
-    }
-
-    try {
-
-        const res = await fetch(
-            `${server}/class-configuration/${id}`,
-            {
-                method: "DELETE",
-            }
-        );
-
-        const data = await res.json();
-
-        if (res.ok) {
-
-            alert(data.message);
-
-            loadClasses();
-
-        } else {
-
-            alert(data.detail);
-
+        if (!editForm.category || !editForm.class_year || !editForm.class_day) {
+            alert("Please complete all fields before saving.");
+            return;
         }
 
-    } catch (err) {
+        try {
+            const res = await fetch(
+                `${server}/class-configuration/${classId}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        term_id: selectedTerm.id,
+                        term_name: selectedTerm.term_name,
+                        category: editForm.category,
+                        class_year: editForm.class_year,
+                        class_day: editForm.class_day,
+                    }),
+                }
+            );
 
-        console.error(err);
+            const data = await res.json();
 
-        alert("Unable to connect to the server.");
+            if (res.ok) {
+                alert(data.message || "Class configuration updated successfully.");
+                setEditingClassId(null);
+                loadClasses();
+            } else {
+                alert(data.detail || "Failed to update class configuration.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Unable to connect to the server.");
+        }
+    };
 
-    }
+    // ---------------------------------------
+    // Delete class configuration
+    // ---------------------------------------
+    const handleDelete = async (classId) => {
+        const confirmed = window.confirm(
+            "Are you sure you want to delete this class configuration?"
+        );
 
-};
+        if (!confirmed) return;
+
+        try {
+            const res = await fetch(
+                `${server}/class-configuration/${classId}`,
+                {
+                    method: "DELETE",
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert(data.message || "Class configuration deleted successfully.");
+                loadClasses();
+            } else {
+                alert(data.detail || "Failed to delete class configuration.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Unable to connect to the server.");
+        }
+    };
 
     return (
-
         <div className="manage-classes">
-
             <h2>Manage Classes</h2>
 
             <p className="description">
-                View, search, edit and delete class configurations.
+                View all configured classes for the selected academic term,
+                edit them inline, or delete them when no longer needed.
             </p>
 
-            <div className="toolbar">
-
-                <input
-                    type="text"
-                    placeholder="Search classes..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
-
+            <div className="button-row top-actions">
+                <button className="back-btn" onClick={onBack}>
+                    Back
+                </button>
             </div>
 
-            <table>
+            {selectedTerm ? (
+                <p className="description">
+                    <strong>Academic Term:</strong> {selectedTerm.term_name}
+                </p>
+            ) : (
+                <p className="description" style={{ color: "#b45309" }}>
+                    Please select an academic term first.
+                </p>
+            )}
 
-                <thead>
+            {!selectedTerm ? (
+                <div className="empty-state">
+                    Select an academic term to view configured classes.
+                </div>
+            ) : loading ? (
+                <p>Loading class configurations...</p>
+            ) : (
+                <>
+                    <div className="toolbar">
+                        <input
+                            type="text"
+                            placeholder="Search classes..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
 
-                    <tr>
+                    {filteredClasses.length === 0 ? (
+                        <div className="empty-state">
+                            No classes found for this term.
+                        </div>
+                    ) : (
+                        <div className="table-wrapper">
+                            <table className="classes-table">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Class Year</th>
+                                        <th>Class Day</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
 
-                        <th>Category</th>
+                                <tbody>
+                                    {filteredClasses.map((item) => {
+                                        const isEditing = editingClassId === item.id;
 
-                        <th>Class Year</th>
+                                        return (
+                                            <tr key={item.id}>
+                                                <td>
+                                                    {isEditing ? (
+                                                        <select
+                                                            value={editForm.category}
+                                                            onChange={async (e) => {
+                                                                const value = e.target.value;
 
-                        <th>Class Day</th>
+                                                                setEditForm({
+                                                                    ...editForm,
+                                                                    category: value,
+                                                                    class_year: "",
+                                                                    class_day: "",
+                                                                });
 
-                        <th>Actions</th>
+                                                                setClassYears([]);
+                                                                setClassDays([]);
 
-                    </tr>
+                                                                await loadClassYears(value);
+                                                            }}
+                                                        >
+                                                            <option value="">Select Category</option>
+                                                            {categories.map((cat) => (
+                                                                <option key={cat} value={cat}>
+                                                                    {cat}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        item.category
+                                                    )}
+                                                </td>
 
-                </thead>
+                                                <td>
+                                                    {isEditing ? (
+                                                        <select
+                                                            value={editForm.class_year}
+                                                            disabled={!editForm.category}
+                                                            onChange={async (e) => {
+                                                                const value = e.target.value;
 
-                <tbody>
+                                                                setEditForm({
+                                                                    ...editForm,
+                                                                    class_year: value,
+                                                                    class_day: "",
+                                                                });
 
-                    {filteredClasses.map((item) => (
+                                                                setClassDays([]);
+                                                                await loadClassDays(
+                                                                    editForm.category,
+                                                                    value
+                                                                );
+                                                            }}
+                                                        >
+                                                            <option value="">Select Class Year</option>
+                                                            {classYears.map((year) => (
+                                                                <option key={year} value={year}>
+                                                                    {year}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        item.class_year || item.year
+                                                    )}
+                                                </td>
 
-                        <tr key={item.id}>
+                                                <td>
+                                                    {isEditing ? (
+                                                        <select
+                                                            value={editForm.class_day}
+                                                            disabled={!editForm.class_year}
+                                                            onChange={(e) =>
+                                                                setEditForm({
+                                                                    ...editForm,
+                                                                    class_day: e.target.value,
+                                                                })
+                                                            }
+                                                        >
+                                                            <option value="">Select Day</option>
+                                                            {classDays.map((day) => (
+                                                                <option key={day} value={day}>
+                                                                    {day}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        item.class_day || item.day
+                                                    )}
+                                                </td>
 
-                            <td>{item.category}</td>
+                                                <td>
+                                                    <div className="action-buttons">
+                                                        {isEditing ? (
+                                                            <>
+                                                                <button
+                                                                    className="save-btn"
+                                                                    onClick={() => handleUpdate(item.id)}
+                                                                >
+                                                                    Save
+                                                                </button>
 
-                            <td>{item.year}</td>
+                                                                <button
+                                                                    className="cancel-btn"
+                                                                    onClick={cancelEdit}
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <button
+                                                                    className="edit-btn"
+                                                                    onClick={() => startEdit(item)}
+                                                                >
+                                                                    Edit
+                                                                </button>
 
-                            <td>{item.day}</td>
+                                                                <button
+                                                                    className="delete-btn"
+                                                                    onClick={() => handleDelete(item.id)}
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </>
+            )}
 
-                            <td>
-
-                                <button
-                                    className="edit-btn"
-                                    onClick={() => onEdit(item)}
-                                >
-                                    Edit
-                                </button>
-
-                                <button
-                                    className="delete-btn"
-                                    onClick={() => deleteClass(item.id)}
-                                >
-                                    Delete
-                                </button>
-
-                            </td>
-
-                        </tr>
-
-                    ))}
-
-                </tbody>
-
-            </table>
-
+            <div className="assumption-box">
+                <h3>Implementation Assumption (Please Confirm)</h3>
+                <ul>
+                    <li>
+                        A class configuration belongs to one selected academic term.
+                    </li>
+                    <li>
+                        The admin can prepare class configurations in advance for any term.
+                    </li>
+                    <li>
+                        Editing a class here updates only the selected term’s configuration,
+                        not classes from other terms.
+                    </li>
+                    <li>
+                        Deleting a class removes that term-specific class configuration and
+                        any related term-specific topics / generated quizzes linked to it.
+                    </li>
+                </ul>
+            </div>
         </div>
-
     );
-
 }
