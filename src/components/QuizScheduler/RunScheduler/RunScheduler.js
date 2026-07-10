@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import "./RunScheduler.css";
 
 export default function RunScheduler({ onBack }) {
+    const [isRunning, setIsRunning] = useState(false);
 
     const scheduler = {
 

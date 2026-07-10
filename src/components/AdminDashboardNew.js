@@ -10,6 +10,7 @@ import SessionTopicsImport from "./SessionTopicsImport/SessionTopicsImport";
 import Leaderboard from "./Leaderboard/Leaderboard";
 import ActivityTypes from "./ActivityTypes/ActivityTypes";
 import QuizScheduler from "./QuizScheduler/QuizScheduler";
+import SchedulerRuns from "./SchedulerRuns/SchedulerRuns";
 export default function AdminDashboardNew({ loggedInUser })  {
   
     // Dashboard is now the default tab
@@ -80,6 +81,14 @@ export default function AdminDashboardNew({ loggedInUser })  {
           Scheduler
         </div>
         <div
+          className={`tab-item ${
+            activeTab === "scheduler-runs" ? "active" : ""
+          }`}
+          onClick={() => setActiveTab("scheduler-runs")}
+        >
+          Scheduler Runs
+        </div>
+        <div
             className={`tab-item ${
                 activeTab === "leaderboard" ? "active" : ""
             }`}
@@ -128,6 +137,11 @@ export default function AdminDashboardNew({ loggedInUser })  {
           <div className="tab-panel">
             <QuizScheduler loggedInUser={loggedInUser}/>
             
+          </div>
+        )}
+        {activeTab === "scheduler-runs" && (
+          <div className="tab-panel">
+            <SchedulerRuns loggedInUser={loggedInUser} />
           </div>
         )}
         {activeTab === "leaderboard" && (

@@ -7,6 +7,8 @@ export default function ConfigureScheduler({
 }) {
 
     const server = process.env.REACT_APP_API_BASE;
+    const [isSavingConfiguration, setIsSavingConfiguration] = useState(false);
+    const [isRunningScheduler, setIsRunningScheduler] = useState(false);
 
     const [enabled, setEnabled] = useState(true);
 
@@ -84,43 +86,39 @@ export default function ConfigureScheduler({
     };
 
     const handleRunNow = async () => {
+    if (isRunningScheduler) return;
 
-        try {
+    setIsRunningScheduler(true);
 
-            const res = await fetch(
-                `${server}/scheduler/run`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        center_code: loggedInUser.center_code,
-                    }),
-                }
-            );
-
-            const data = await res.json();
-
-            if (res.ok) {
-
-                alert(data.message);
-
-            } else {
-
-                alert(data.detail);
-
+    try {
+        const res = await fetch(
+            `${server}/scheduler/run`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    center_code: loggedInUser.center_code,
+                }),
             }
+        );
 
-        } catch (err) {
+        const data = await res.json();
 
-            console.error(err);
-
-            alert("Unable to connect to the server.");
-
+        if (res.ok) {
+            alert(data.message);
+        } else {
+            alert(data.detail);
         }
 
-    };
+    } catch (err) {
+        console.error(err);
+        alert("Unable to connect to the server.");
+    } finally {
+        setIsRunningScheduler(false);
+    }
+};
 
     const toggleDay = (day) => {
 
@@ -135,65 +133,49 @@ export default function ConfigureScheduler({
     };
 
     const handleSave = async () => {
+    if (isSavingConfiguration) return;
 
-        try {
+    setIsSavingConfiguration(true);
 
-            const res = await fetch(
-                `${server}/scheduler/configuration`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-
-                        center_code: loggedInUser.center_code,
-
-                        scheduler_enabled: enabled,
-
-                        run_time: runTime,
-
-                        timezone: "Australia/Sydney",
-
-                        monday: days.monday,
-
-                        tuesday: days.tuesday,
-
-                        wednesday: days.wednesday,
-
-                        thursday: days.thursday,
-
-                        friday: days.friday,
-
-                        saturday: days.saturday,
-
-                        sunday: days.sunday,
-
-                    }),
-                }
-            );
-
-            const data = await res.json();
-
-            if (res.ok) {
-
-                alert(data.message);
-
-            } else {
-
-                alert(data.detail);
-
+    try {
+        const res = await fetch(
+            `${server}/scheduler/configuration`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    center_code: loggedInUser.center_code,
+                    scheduler_enabled: enabled,
+                    run_time: runTime,
+                    timezone: "Australia/Sydney",
+                    monday: days.monday,
+                    tuesday: days.tuesday,
+                    wednesday: days.wednesday,
+                    thursday: days.thursday,
+                    friday: days.friday,
+                    saturday: days.saturday,
+                    sunday: days.sunday,
+                }),
             }
+        );
 
-        } catch (err) {
+        const data = await res.json();
 
-            console.error(err);
-
-            alert("Unable to connect to the server.");
-
+        if (res.ok) {
+            alert(data.message);
+        } else {
+            alert(data.detail);
         }
 
-    };
+    } catch (err) {
+        console.error(err);
+        alert("Unable to connect to the server.");
+    } finally {
+        setIsSavingConfiguration(false);
+    }
+};
 
     return (
 
@@ -309,17 +291,19 @@ export default function ConfigureScheduler({
             <div className="button-row">
 
                 <button
-                    className="save-btn"
+                    className={`save-btn ${isSavingConfiguration ? "disabled" : ""}`}
                     onClick={handleSave}
+                    disabled={isSavingConfiguration}
                 >
-                    Save Configuration
+                    {isSavingConfiguration ? "Saving..." : "Save Configuration"}
                 </button>
 
                 <button
-                    className="run-btn"
+                    className={`run-btn ${isRunningScheduler ? "disabled" : ""}`}
                     onClick={handleRunNow}
+                    disabled={isRunningScheduler}
                 >
-                    ▶ Run Scheduler Now
+                    {isRunningScheduler ? "Running Scheduler..." : "▶ Run Scheduler Now"}
                 </button>
 
                 

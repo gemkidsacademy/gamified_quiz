@@ -15,6 +15,10 @@ export default function ChatbotGamifiedQuiz({
   const [quiz, setQuiz] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const chatEndRef = useRef(null);
+  const [studentAnswers, setStudentAnswers] = useState({});
+  const [quizCompleted, setQuizCompleted] = useState(false);
+  const [reviewData, setReviewData] = useState([]);
+  const [finalScore, setFinalScore] = useState(null);
   
 
   // ------------------ Auto-scroll ------------------
@@ -22,22 +26,7 @@ export default function ChatbotGamifiedQuiz({
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isWaiting]);
 
-  // ------------------ Welcome message ------------------
-  useEffect(() => {
-    console.log("[DEBUG] loggedInUser:", loggedInUser);
-
-      if (loggedInUser?.name) {
-
-          setMessages([
-              {
-                  sender: "bot",
-                  text: `Welcome, Dear ${loggedInUser.name}! Let's begin your weekly quiz.`,
-              },
-          ]);
-
-      }
-
-      }, [loggedInUser]);
+  
 
   // ------------------ Fetch Quiz ------------------
   useEffect(() => {
@@ -47,9 +36,17 @@ export default function ChatbotGamifiedQuiz({
   hasFetchedQuizRef.current = true;
 
   const fetchQuiz = async () => {
-    console.log("[DEBUG] loggedInUser:", loggedInUser);
+  console.log("[DEBUG] loggedInUser:", loggedInUser);
+
+  try {
+    // ------------------------------------
+    // STEP 1: Fetch welcome quote first
+    // ------------------------------------
+    let quoteText = "Success is the sum of small efforts, repeated day in and day out.";
+    let quoteAuthor = "Robert Collier";
+
     try {
-      const response = await fetch(`${server}/student/current-gamified-quiz`, {
+      const quoteResponse = await fetch(`${server}/student/gamified-welcome-quote`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -59,42 +56,92 @@ export default function ChatbotGamifiedQuiz({
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to fetch quiz");
-
-      const data = await response.json();
-
-      if (data.message === "You have already attempted this week's quiz.") {
-        setMessages((prev) => {
-          const alreadyExists = prev.some(
-            (msg) => msg.sender === "bot" && msg.text === data.message
-          );
-
-          if (alreadyExists) return prev;
-
-          return [...prev, { sender: "bot", text: data.message }];
-        });
-        return;
+      if (quoteResponse.ok) {
+        const quoteData = await quoteResponse.json();
+        quoteText = quoteData.quote || quoteText;
+        quoteAuthor = quoteData.author || quoteAuthor;
       }
+    } catch (quoteErr) {
+      console.error("Error fetching welcome quote:", quoteErr);
+    }
 
-      setQuiz(data);
+    setMessages([
+      {
+        sender: "bot",
+        type: "welcome",
+        welcomeText: `Welcome, Dear ${loggedInUser.name}!`,
+        quote: quoteText,
+        author: quoteAuthor,
+        footer: "Let's begin your weekly quiz.",
+      },
+    ]);
 
-      if (data?.questions?.length > 0) {
-        setMessages((prev) => [
+    // ------------------------------------
+    // STEP 2: Fetch current quiz
+    // ------------------------------------
+    const response = await fetch(`${server}/student/current-gamified-quiz`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        student_id: loggedInUser.student_id,
+      }),
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch quiz");
+
+    const data = await response.json();
+
+    // ------------------------------------
+    // If already attempted
+    // ------------------------------------
+    if (data.already_attempted) {
+      setMessages((prev) => {
+        const alreadyExists = prev.some(
+          (msg) => msg.sender === "bot" && msg.text === data.message
+        );
+
+        if (alreadyExists) return prev;
+
+        return [
           ...prev,
           {
             sender: "bot",
-            text: data.questions[0].prompt,
+            text: `${data.message} Your score: ${data.current_score}/${data.total_questions}`,
           },
-        ]);
-      }
-    } catch (err) {
-      console.error("Error fetching quiz:", err);
+        ];
+      });
+
+      setQuizCompleted(true);
+      setFinalScore(data.current_score);
+      setReviewData(data.review || []);
+      setCurrentQuestionIndex(null);
+      return;
+    }
+
+    setQuiz(data);
+
+    // ------------------------------------
+    // STEP 3: Append first question after welcome message
+    // ------------------------------------
+    if (data?.questions?.length > 0) {
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: "Sorry, no quiz available right now." },
+        {
+          sender: "bot",
+          text: data.questions[0].prompt,
+        },
       ]);
     }
-  };
+  } catch (err) {
+    console.error("Error fetching quiz:", err);
+    setMessages((prev) => [
+      ...prev,
+      { sender: "bot", text: "Sorry, no quiz available right now." },
+    ]);
+  }
+};
 
   fetchQuiz();
 }, [loggedInUser?.student_id, server]);
@@ -182,23 +229,31 @@ export default function ChatbotGamifiedQuiz({
     setMessages((prev) => [...prev, { sender: "user", text: studentAnswer }]);
 
     // Move to next question or finish quiz
-    const nextIndex = currentQuestionIndex + 1;
-    if (quiz?.questions?.[nextIndex]) {
-      setMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: quiz.questions[nextIndex].prompt },
-      ]);
-      setCurrentQuestionIndex(nextIndex);
-    } else {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "bot",
-          text: `Quiz completed! Your score: ${data.current_score}/${quiz.questions.length}`,
-        },
-      ]);
-      setCurrentQuestionIndex(null); // disable further input
-    }
+        if (data.completed) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              sender: "bot",
+              text: `Quiz completed! Your score: ${data.current_score}/${data.total_questions}`,
+            },
+          ]);
+
+          setQuizCompleted(true);
+          setFinalScore(data.current_score);
+          setReviewData(data.review || []);
+          setCurrentQuestionIndex(null);
+          return;
+        }
+
+        const nextIndex = currentQuestionIndex + 1;
+
+        if (quiz?.questions?.[nextIndex]) {
+          setMessages((prev) => [
+            ...prev,
+            { sender: "bot", text: quiz.questions[nextIndex].prompt },
+          ]);
+          setCurrentQuestionIndex(nextIndex);
+        }
   } catch (err) {
     console.error("Error submitting answer:", err);
     setMessages((prev) => [
@@ -226,8 +281,28 @@ export default function ChatbotGamifiedQuiz({
             <div key={idx} className={`message ${msg.sender}`}>
               {msg.sender === "bot" ? (
                 <>
-                  {msg.name && <div className="bot-label">{parseBoldText(msg.name)}</div>}
-                  <div dangerouslySetInnerHTML={{ __html: formatMessageWithLinks(msg.text) }} />
+                  {msg.type === "welcome" ? (
+                    <div className="welcome-card">
+                      <div className="welcome-title">{msg.welcomeText}</div>
+
+                      <div className="quote-label">Quote of the day</div>
+
+                      <div className="quote-text">“{msg.quote}”</div>
+
+                      <div className="quote-author">— {msg.author}</div>
+
+                      <div className="welcome-footer">{msg.footer}</div>
+                    </div>
+                  ) : (
+                    <>
+                      {msg.name && <div className="bot-label">{parseBoldText(msg.name)}</div>}
+                      <div
+                        style={{ whiteSpace: "pre-line" }}
+                        dangerouslySetInnerHTML={{ __html: formatMessageWithLinks(msg.text) }}
+                      />
+                    </>
+                  )}
+
                   {Array.isArray(msg.links) && msg.links.length > 0 && (
                     <div className="pdf-links">
                       <a
@@ -324,6 +399,41 @@ export default function ChatbotGamifiedQuiz({
             </>
 
         </form>
+        {quizCompleted && reviewData.length > 0 && (
+  <div className="quiz-review">
+    <h3>Quiz Review</h3>
+    <p className="review-score">
+      Score: {finalScore}/{reviewData.length || 0}
+    </p>
+
+    {reviewData.map((item, idx) => (
+      <div
+        key={idx}
+        className={`review-card ${item.is_correct ? "correct" : "wrong"}`}
+      >
+        <div className="review-question">
+          <strong>Question {item.question_number}:</strong> {item.prompt}
+        </div>
+
+        <div className="review-answer">
+          <strong>Your answer:</strong> {item.selected_option || "No answer"}
+        </div>
+
+        <div className="review-answer">
+          <strong>Correct answer:</strong> {item.correct_answer}
+        </div>
+
+        <div
+          className={`review-result ${
+            item.is_correct ? "correct-text" : "wrong-text"
+          }`}
+        >
+          {item.is_correct ? "✔ Correct" : "✘ Incorrect"}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
 
 
       </div>

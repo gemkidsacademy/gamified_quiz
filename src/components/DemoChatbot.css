@@ -220,4 +220,111 @@ html, body {
   overflow: hidden;
   background: linear-gradient(to bottom right, #ffe3d4, #ffd1c0);
 }
+.quiz-review {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f8f9fb;
+  border-top: 1px solid #ddd;
+}
 
+.review-score {
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.review-card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+
+.review-card.correct {
+  border-left: 5px solid #28a745;
+  background: #f6fff8;
+}
+
+.review-card.wrong {
+  border-left: 5px solid #dc3545;
+  background: #fff7f7;
+}
+
+.review-question {
+  margin-bottom: 8px;
+}
+
+.review-answer {
+  margin-bottom: 6px;
+}
+
+.review-result {
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.correct-text {
+  color: #28a745;
+}
+
+.wrong-text {
+  color: #dc3545;
+}
+.quiz-review {
+  margin-top: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.quiz-review::-webkit-scrollbar {
+  width: 8px;
+}
+
+.quiz-review::-webkit-scrollbar-thumb {
+  background: #c7c7c7;
+  border-radius: 6px;
+}
+.welcome-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.welcome-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #222;
+}
+
+.quote-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #ff6b00;
+  margin-top: 2px;
+}
+
+.quote-text {
+  font-size: 15px;
+  line-height: 1.6;
+  font-style: italic;
+  color: #333;
+  padding-left: 10px;
+  border-left: 3px solid #ff6b00;
+}
+
+.quote-author {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  text-align: right;
+  margin-top: -2px;
+}
+
+.welcome-footer {
+  font-size: 14px;
+  color: #222;
+  margin-top: 4px;
+}
