@@ -9,7 +9,7 @@ export default function ChatbotGamifiedQuiz({
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const server = process.env.REACT_APP_API_BASE;
-  
+  const [isLoadingQuiz, setIsLoadingQuiz] = useState(true);
   const [isWaiting, setIsWaiting] = useState(false);
   const hasFetchedQuizRef = useRef(false);
   const [quiz, setQuiz] = useState(null);
@@ -19,6 +19,7 @@ export default function ChatbotGamifiedQuiz({
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [reviewData, setReviewData] = useState([]);
   const [finalScore, setFinalScore] = useState(null);
+  
   
 
   // ------------------ Auto-scroll ------------------
@@ -36,17 +37,28 @@ export default function ChatbotGamifiedQuiz({
   hasFetchedQuizRef.current = true;
 
   const fetchQuiz = async () => {
-  console.log("[DEBUG] loggedInUser:", loggedInUser);
+    console.log("[DEBUG] loggedInUser:", loggedInUser);
 
-  try {
-    // ------------------------------------
-    // STEP 1: Fetch welcome quote first
-    // ------------------------------------
-    let quoteText = "Success is the sum of small efforts, repeated day in and day out.";
-    let quoteAuthor = "Robert Collier";
+    // Show welcome card immediately
+    setMessages([
+      {
+        sender: "bot",
+        type: "welcome",
+        welcomeText: `Welcome, Dear ${loggedInUser.name}!`,
+        quote: null,
+        author: "",
+        footer: "Preparing today's quote and quiz...",
+      },
+    ]);
+
+    setIsLoadingQuiz(true);
 
     try {
-      const quoteResponse = await fetch(`${server}/student/gamified-welcome-quote`, {
+
+      // ------------------------------------
+      // Fetch quote and quiz in parallel
+      // ------------------------------------
+      const quotePromise = fetch(`${server}/student/gamified-welcome-quote`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -56,47 +68,53 @@ export default function ChatbotGamifiedQuiz({
         }),
       });
 
-      if (quoteResponse.ok) {
-        const quoteData = await quoteResponse.json();
-        quoteText = quoteData.quote || quoteText;
-        quoteAuthor = quoteData.author || quoteAuthor;
-      }
-    } catch (quoteErr) {
-      console.error("Error fetching welcome quote:", quoteErr);
-    }
+      const quizPromise = fetch(`${server}/student/current-gamified-quiz`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          student_id: loggedInUser.student_id,
+        }),
+      });
 
-    setMessages([
-      {
-        sender: "bot",
-        type: "welcome",
-        welcomeText: `Welcome, Dear ${loggedInUser.name}!`,
-        quote: quoteText,
-        author: quoteAuthor,
-        footer: "Let's begin your weekly quiz.",
-      },
-    ]);
+      // Update welcome card with quote
+      const quoteResponse = await quotePromise;
 
-    // ------------------------------------
-    // STEP 2: Fetch current quiz
-    // ------------------------------------
-    const response = await fetch(`${server}/student/current-gamified-quiz`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        student_id: loggedInUser.student_id,
-      }),
-    });
+// Update welcome card with quote
+if (quoteResponse.ok) {
+    const quoteData = await quoteResponse.json();
 
-    if (!response.ok) throw new Error("Failed to fetch quiz");
+    setMessages((prev) =>
+        prev.map((msg) =>
+            msg.type === "welcome"
+                ? {
+                    ...msg,
+                    quote: quoteData.quote,
+                    author: quoteData.author,
+                    footer: "Let's begin your weekly quiz.",
+                  }
+                : msg
+        )
+    );
+}
 
-    const data = await response.json();
+      // Read quiz response
+      const quizResponse = await quizPromise;
 
-    // ------------------------------------
-    // If already attempted
-    // ------------------------------------
-    if (data.already_attempted) {
+// Read quiz response
+if (!quizResponse.ok) {
+    throw new Error("Failed to fetch quiz");
+}
+
+const data = await quizResponse.json();
+
+setIsLoadingQuiz(false);
+
+      // ------------------------------------
+      // If already attempted
+      // ------------------------------------
+      if (data.already_attempted) {
       setMessages((prev) => {
         const alreadyExists = prev.some(
           (msg) => msg.sender === "bot" && msg.text === data.message
@@ -135,12 +153,18 @@ export default function ChatbotGamifiedQuiz({
       ]);
     }
   } catch (err) {
-    console.error("Error fetching quiz:", err);
-    setMessages((prev) => [
-      ...prev,
-      { sender: "bot", text: "Sorry, no quiz available right now." },
-    ]);
-  }
+      console.error("Error fetching quiz:", err);
+
+      setIsLoadingQuiz(false);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: "Sorry, no quiz available right now.",
+        },
+      ]);
+    }
 };
 
   fetchQuiz();
@@ -285,11 +309,25 @@ export default function ChatbotGamifiedQuiz({
                     <div className="welcome-card">
                       <div className="welcome-title">{msg.welcomeText}</div>
 
-                      <div className="quote-label">Quote of the day</div>
+                      {msg.quote ? (
+                        <>
+                          <div className="quote-label">Quote of the day</div>
 
-                      <div className="quote-text">“{msg.quote}”</div>
+                          <div className="quote-text">“{msg.quote}”</div>
 
-                      <div className="quote-author">— {msg.author}</div>
+                          <div className="quote-author">— {msg.author}</div>
+                        </>
+                      ) : (
+                        <div
+                          style={{
+                            margin: "18px 0",
+                            color: "#777",
+                            fontStyle: "italic",
+                          }}
+                        >
+                          Loading today's inspirational quote...
+                        </div>
+                      )}
 
                       <div className="welcome-footer">{msg.footer}</div>
                     </div>
@@ -321,6 +359,13 @@ export default function ChatbotGamifiedQuiz({
               )}
             </div>
           ))}
+          {isLoadingQuiz && (
+            <div className="message bot waiting">
+              <div className="spinner"></div>
+              <span>Preparing today's quiz...</span>
+            </div>
+          )}
+
           {isWaiting && (
             <div className="message bot waiting">
               <div className="spinner"></div>

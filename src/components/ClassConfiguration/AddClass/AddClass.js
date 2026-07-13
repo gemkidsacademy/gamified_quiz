@@ -222,7 +222,7 @@ export default function AddClass({
 
             <form onSubmit={handleSubmit}>
                 <div className="form-group">
-                    <label>Category</label>
+                    <label>Class</label>
 
                     <select
                         value={category}

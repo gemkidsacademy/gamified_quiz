@@ -147,23 +147,13 @@
 }
 
 .leaderboard thead {
-
-    background: #4a90e2;
-
-    color: white;
-
+    background: #f3f4f6;
 }
 
 .leaderboard th {
-
-    padding: 14px;
-
-    text-align: left;
-
-    font-size: 14px;
-
-    font-weight: 600;
-
+    color: #1f2937;      /* Dark charcoal */
+    font-size: 15px;
+    font-weight: 700;
 }
 
 .leaderboard td {

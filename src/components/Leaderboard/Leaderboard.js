@@ -13,19 +13,125 @@ export default function Leaderboard({ loggedInUser }) {
     const [selectedTerm, setSelectedTerm] = useState("");
     const [selectedSession, setSelectedSession] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
+    const [classDays, setClassDays] = useState([]);     
+    const [selectedClassDay, setSelectedClassDay] = useState("");
+    const [academicYears, setAcademicYears] = useState([]);
+    const [selectedAcademicYear, setSelectedAcademicYear] = useState("");
+    
 
     const [leaderboard, setLeaderboard] = useState([]);
+    const loadAcademicYears = async () => {
+        try {
+            const response = await fetch(
+                `${API_BASE}/leaderboard/academic-years`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        center_code: loggedInUser.center_code,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            console.log("Academic years:", data);
+
+            setAcademicYears(
+                Array.isArray(data.academic_years)
+                    ? data.academic_years
+                    : []
+            );
+        } catch (err) {
+            console.log("Error loading academic years:", err);
+            setAcademicYears([]);
+        }
+    };
 
     useEffect(() => {
-        loadClassYears();
-        loadTerms();
-        loadCategories();
+        
+        loadAcademicYears();
+        
     }, []);
 
-  const loadClassYears = async () => {
+
+    const loadTerms = async (calendarYear) => {
+    try {
+        const response = await fetch(`${API_BASE}/leaderboard/academic-terms`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                center_code: loggedInUser.center_code,
+                calendar_year: calendarYear,
+            }),
+        });
+
+        const data = await response.json();
+
+        console.log("Terms:", data);
+
+        setTerms(Array.isArray(data) ? data : []);
+    } catch (err) {
+        console.log("Error loading terms:", err);
+        setTerms([]);
+    }
+};
+
+    const loadClassFilters = async (termId) => {
+        try {
+            const response = await fetch(
+                `${API_BASE}/leaderboard/class-filters`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        center_code: loggedInUser.center_code,
+                        calendar_year: selectedAcademicYear,
+                        term_id: Number(termId),
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            console.log("Class Filters:", data);
+
+            setCategories(
+                Array.isArray(data.categories)
+                    ? data.categories
+                    : []
+            );
+
+            setClassYears(
+                Array.isArray(data.class_years)
+                    ? data.class_years
+                    : []
+            );
+
+            setClassDays(
+                Array.isArray(data.class_days)
+                    ? data.class_days
+                    : []
+            );
+
+        } catch (err) {
+            console.log("Error loading class filters:", err);
+
+            setCategories([]);
+            setClassYears([]);
+            setClassDays([]);
+        }
+    };
+    const loadSessions = async (termId) => {
     try {
         const response = await fetch(
-            `${API_BASE}/leaderboard/class-years`,
+            `${API_BASE}/leaderboard/sessions`,
             {
                 method: "POST",
                 headers: {
@@ -33,108 +139,113 @@ export default function Leaderboard({ loggedInUser }) {
                 },
                 body: JSON.stringify({
                     center_code: loggedInUser.center_code,
+                    term_id: Number(termId),
                 }),
             }
         );
 
         const data = await response.json();
 
-        console.log("Leaderboard class years:", data);
+        console.log("Sessions:", data);
 
-        setClassYears(
-            Array.isArray(data.class_years)
-                ? data.class_years
+        setSessions(
+            Array.isArray(data.sessions)
+                ? data.sessions
                 : []
         );
+
     } catch (err) {
-        console.log("Error loading class years:", err);
-        setClassYears([]);
+        console.log("Error loading sessions:", err);
+        setSessions([]);
     }
 };
 
-    const loadTerms = async () => {
-        try {
-            const response = await fetch(`${API_BASE}/academic-terms/list`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    center_code: loggedInUser.center_code,
-                }),
-            });
+    const handleAcademicYearChange = async (e) => {
+    const year = e.target.value;
 
-            const data = await response.json();
-            console.log("Terms:", data);
-            setTerms(data);
-        } catch (err) {
-            console.log("Error loading terms:", err);
-        }
+    setSelectedAcademicYear(year);
+
+    // Reset downstream filters
+    setSelectedTerm("");
+    setSelectedCategory("");
+    setSelectedClassYear("");
+    setSelectedClassDay("");
+    setSelectedSession("");
+
+    setTerms([]);
+    setCategories([]);
+    setClassYears([]);
+    setClassDays([]);
+    setSessions([]);
+    setLeaderboard([]);
+
+    if (!year) return;
+
+    await loadTerms(year);
+};
+    const handleCategoryChange = (e) => {
+        setSelectedCategory(e.target.value);
+
+        setSelectedClassYear("");
+        setSelectedClassDay("");
+        setSelectedSession("");
+
+        
+        
+        setLeaderboard([]);
+
+        // TODO:
+        // loadClassYears(...)
     };
-
-    const loadCategories = async () => {
-        try {
-            const response = await fetch(`${API_BASE}/leaderboard/categories`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    center_code: loggedInUser.center_code,
-                }),
-            });
-
-            const data = await response.json();
-            console.log("Categories:", data);
-            setCategories(data);
-        } catch (err) {
-            console.log("Error loading categories:", err);
-        }
+    const handleSessionChange = (e) => {
+        setSelectedSession(Number(e.target.value));
+        setLeaderboard([]);
     };
+    const handleClassDayChange = (e) => {
+    setSelectedClassDay(e.target.value);
 
+    setSelectedSession("");
+
+    setLeaderboard([]);
+};
     const handleClassYearChange = (e) => {
-        setSelectedClassYear(e.target.value);
+    setSelectedClassYear(e.target.value);
 
-        // reset downstream filters
-        setSelectedTerm("");
-        setSelectedSession("");
-        setSelectedCategory("");
-        setSessions([]);
-        setLeaderboard([]);
-    };
+    setSelectedClassDay("");
+    setSelectedSession("");
 
-    const handleTermChange = (e) => {
-        const termId = Number(e.target.value);
+    setLeaderboard([]);
+};
 
-        setSelectedTerm(termId);
-        setSelectedSession("");
-        setLeaderboard([]);
+    const handleTermChange = async (e) => {
+    const termId = e.target.value;
 
-        const selected = terms.find(
-            (term) => Number(term.id) === termId
-        );
+    setSelectedTerm(termId);
 
-        if (!selected) {
-            setSessions([]);
-            return;
-        }
+    setSelectedCategory("");
+    setSelectedClassYear("");
+    setSelectedClassDay("");
+    setSelectedSession("");
 
-        const totalWeeks = Number(selected.number_of_weeks || 0);
+    setCategories([]);
+    setClassYears([]);
+    setClassDays([]);
+    setSessions([]);
+    setLeaderboard([]);
 
-        const list = [];
-        for (let i = 1; i <= totalWeeks; i++) {
-            list.push(i);
-        }
+    if (!termId) return;
 
-        setSessions(list);
-    };
+    await loadClassFilters(termId);
+    await loadSessions(termId);
+};
 
     const loadLeaderboard = async () => {
         if (
             !selectedClassYear ||
             !selectedTerm ||
-            !selectedSession ||
-            !selectedCategory
+            !selectedCategory ||
+            !selectedClassDay ||
+            !selectedSession
         ) {
             alert("Select class year, term, session, and category.");
             return;
@@ -148,10 +259,12 @@ export default function Leaderboard({ loggedInUser }) {
                 },
                 body: JSON.stringify({
                     center_code: loggedInUser.center_code,
-                    class_year: selectedClassYear,
-                    term_id: selectedTerm,
-                    session: selectedSession,
+                    calendar_year: selectedAcademicYear,
+                    term_id: Number(selectedTerm),
                     category: selectedCategory,
+                    class_year: selectedClassYear,
+                    class_day: selectedClassDay,
+                    session: Number(selectedSession),
                 }),
             });
 
@@ -177,73 +290,45 @@ export default function Leaderboard({ loggedInUser }) {
             <h2>Weekly Leaderboard</h2>
 
             <div className="filters">
+                
+
                 <div>
-                    <label>Class Year</label>
-                    <select
-                        value={selectedClassYear}
-                        onChange={handleClassYearChange}
+                    
+                    <label>Calendar Year</label>
+                   <select
+                        value={selectedAcademicYear}
+                        onChange={handleAcademicYearChange}
                     >
                         <option value="">Select</option>
 
-                        {Array.isArray(classYears) &&
-                            classYears.map((year) => (
-                                <option key={year} value={year}>
-                                    {year}
-                                </option>
-                            ))}
+                        {academicYears.map((year) => (
+                            <option key={year} value={year}>
+                                {year}
+                            </option>
+                        ))}
                     </select>
-                </div>
-
-                <div>
+                    
                     <label>Academic Term</label>
                     <select
                         value={selectedTerm}
                         onChange={handleTermChange}
-                        disabled={!selectedClassYear}
+                        disabled={!selectedAcademicYear}
                     >
                         <option value="">Select</option>
 
                         {terms.map((term) => (
-                            <option
-                                key={term.id}
-                                value={term.id}
-                            >
+                            <option key={term.id} value={term.id}>
                                 {term.term_name}
                             </option>
                         ))}
                     </select>
                 </div>
-
                 <div>
-                    <label>Session</label>
-                    <select
-                        value={selectedSession}
-                        onChange={(e) =>
-                            setSelectedSession(Number(e.target.value))
-                        }
-                        disabled={!selectedTerm}
-                    >
-                        <option value="">Select</option>
-
-                        {sessions.map((session) => (
-                            <option
-                                key={session}
-                                value={session}
-                            >
-                                Session {session}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div>
-                    <label>Category</label>
+                    <label>Class </label>
                     <select
                         value={selectedCategory}
-                        onChange={(e) =>
-                            setSelectedCategory(e.target.value)
-                        }
-                        disabled={!selectedSession}
+                        onChange={handleCategoryChange}
+                        disabled={!selectedTerm}
                     >
                         <option value="">Select</option>
 
@@ -257,6 +342,62 @@ export default function Leaderboard({ loggedInUser }) {
                         ))}
                     </select>
                 </div>
+                <div>
+                    <label>Class Year</label>
+                    <select
+                        value={selectedClassYear}
+                        onChange={handleClassYearChange}
+                        disabled={!selectedCategory}
+                    >
+                        <option value="">Select</option>
+
+                        {Array.isArray(classYears) &&
+                            classYears.map((year) => (
+                                <option key={year} value={year}>
+                                    {year}
+                                </option>
+                            ))}
+                    </select>
+                </div>
+                <div>
+                    <label>Class Day</label>
+                    <select
+                        value={selectedClassDay}
+                        onChange={handleClassDayChange}
+                        disabled={!selectedClassYear}
+                    >
+                        <option value="">Select</option>
+
+                        {Array.isArray(classDays) &&
+                            classDays.map((day) => (
+                                <option key={day} value={day}>
+                                    {day}
+                                </option>
+                            ))}
+                    </select>
+                </div>
+
+                <div>
+                    <label>Session</label>
+                    <select
+                        value={selectedSession}
+                        onChange={handleSessionChange}
+                        disabled={!selectedClassDay}
+                    >
+                        <option value="">Select</option>
+
+                        {sessions.map((session) => (
+                            <option
+                                key={session.session_number}
+                                value={session.session_number}
+                            >
+                                {session.session_name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                
 
                 <button onClick={loadLeaderboard}>
                     Load Leaderboard

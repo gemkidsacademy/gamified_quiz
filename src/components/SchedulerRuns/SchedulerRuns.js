@@ -109,7 +109,7 @@ export default function SchedulerRuns({ loggedInUser }) {
                             <tr>
                                 <th>ID</th>
                                 <th>Term</th>
-                                <th>Date</th>
+                                <th>Started at</th>
                                 <th>Day</th>
                                 <th>Session</th>
                                 <th>Total Classes</th>
@@ -134,7 +134,11 @@ export default function SchedulerRuns({ loggedInUser }) {
                                     <tr key={run.id}>
                                         <td>{run.id}</td>
                                         <td>{run.term_name}</td>
-                                        <td>{run.run_date}</td>
+                                        <td>
+                                            {run.started_at
+                                                ? new Date(run.started_at).toLocaleString()
+                                                : "-"}
+                                        </td>
                                         <td>{run.weekday}</td>
                                         <td>{run.current_session}</td>
                                         <td>{run.total_classes}</td>
