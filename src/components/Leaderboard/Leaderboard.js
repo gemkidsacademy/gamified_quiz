@@ -244,10 +244,9 @@ export default function Leaderboard({ loggedInUser }) {
             !selectedClassYear ||
             !selectedTerm ||
             !selectedCategory ||
-            !selectedClassDay ||
-            !selectedSession
+            !selectedClassDay
         ) {
-            alert("Select class year, term, session, and category.");
+            alert("Select class year, term, class and class day.");
             return;
         }
 
@@ -264,7 +263,9 @@ export default function Leaderboard({ loggedInUser }) {
                     category: selectedCategory,
                     class_year: selectedClassYear,
                     class_day: selectedClassDay,
-                    session: Number(selectedSession),
+                    session: selectedSession
+                    ? Number(selectedSession)
+                    : null,
                 }),
             });
 
@@ -378,7 +379,8 @@ export default function Leaderboard({ loggedInUser }) {
                 </div>
 
                 <div>
-                    <label>Session</label>
+                    <label>Session
+                           (All Sessions if not selected)</label>
                     <select
                         value={selectedSession}
                         onChange={handleSessionChange}

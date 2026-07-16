@@ -330,7 +330,15 @@ export default function ManageActivities({
                                             )}
                                         </td>
 
-                                        <td>{activity.updated_at}</td>
+                                        <td>
+                                            {activity.updated_at
+                                                ? new Date(activity.updated_at).toLocaleDateString("en-GB", {
+                                                    day: "2-digit",
+                                                    month: "short",
+                                                    year: "numeric",
+                                                })
+                                                : "-"}
+                                            </td>
 
                                         <td>
                                             <div className="action-buttons">
