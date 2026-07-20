@@ -79,8 +79,8 @@ export default function Dashboard({ loggedInUser }) {
                 schedulerEnabled:
                     data.scheduler_enabled || false,
 
-                nextRun:
-                    data.next_scheduled_run || "Not Configured",
+                // Hardcoded
+                nextRun: "Monday 6:00 PM",
 
                 lastRun:
                     data.last_scheduler_run || "Never",
