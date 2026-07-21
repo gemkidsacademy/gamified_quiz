@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -20,16 +20,12 @@ import UsageDashboard from "./components/UsageDashboard";
 
 // ===================== LOGIN PAGE =====================
 function LoginPage({ setIsLoggedIn, setLoggedInUser }) {
-  const [email, setEmail] = useState("");
+  
   const server = process.env.REACT_APP_API_BASE;
-  const [loginMode, setLoginMode] = useState("otp");
+  
   const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
   
-
-  const [timer, setTimer] = useState(0);
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
@@ -39,15 +35,7 @@ function LoginPage({ setIsLoggedIn, setLoggedInUser }) {
   console.log("SERVER =", server);
   console.log("APP VERSION = 2026-06-27");
   
-  const handleEnterKey = (e) => {
-    if (e.key !== "Enter") return;
   
-    if (!otpSent) {
-      generateOtp();
-    } else {
-      handleLogin();
-    }
-  };
   const handleStudentLogin = async () => {
   setError("");
 
@@ -123,117 +111,13 @@ function LoginPage({ setIsLoggedIn, setLoggedInUser }) {
 };
 
 
-  // ---------------- TIMER HANDLER ----------------
-  useEffect(() => {
-    if (!otpSent || timer <= 0) return;
+  
 
-    const interval = setInterval(() => setTimer((t) => t - 1), 1000);
-    return () => clearInterval(interval);
-  }, [otpSent, timer]);
+  
 
-  // ---------------- GENERATE OTP ----------------
-  const generateOtp = async () => {
-    setError("");
+  
 
-    const formattedEmail = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!formattedEmail || !emailRegex.test(formattedEmail)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${server}/send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formattedEmail }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setOtpSent(true);
-        setTimer(300); // 5 minutes
-      } else {
-        setError(data.detail || "Failed to send OTP");
-      }
-    } catch (e) {
-      console.error(e);
-      setError("Failed to send OTP");
-    }
-  };
-
-  // ---------------- HANDLE LOGIN ----------------
-  const handleLogin = async () => {
-    setError("");
-
-    if (!otpSent) {
-      setError("Please click 'Generate OTP' first");
-      return;
-    }
-    if (!email) {
-      setError("Enter email");
-      return;
-    }
-    if (!otp) {
-      setError("Enter OTP");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${server}/verify-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-          otp,
-        }),
-      });
-
-      const data = await res.json();
-      console.log("data",data);
-
-      if (res.ok) {
-          setIsLoggedIn(true);
-
-          if (data.user_type === "admin") {
-              setLoggedInUser({
-                  user_type: "admin",
-                  id: data.admin.id,
-                  username: data.admin.username,
-                  role: data.admin.role,
-                  center_code: data.admin.center_code,
-              });
-
-              navigate("/AdminPanel");
-              return;
-          }
-
-          setLoggedInUser({
-              user_type: "student",
-              student_id: data.student.student_id,
-              name: data.student.name,
-              class_name: data.student.class_name,
-              class_day: data.student.class_day,
-              student_year: data.student.student_year,
-              center_code: data.student.center_code,
-              center_name: data.student.center_name,
-              parent_email: data.student.parent_email,
-          });
-
-          navigate("/quiz");
-      } else {
-        setError(data.detail || "Invalid OTP");
-      }
-    } catch (e) {
-      console.error(e);
-      setError("Login failed. Try again.");
-    }
-  };
-
-  // LOGIN BUTTON disabled until OTP is generated
-  const loginDisabled = !otpSent;
+  
 
   return (
     <div style={{ ...styles.container, flexDirection: "column" }}>
@@ -244,127 +128,41 @@ function LoginPage({ setIsLoggedIn, setLoggedInUser }) {
       />
 
       <div style={styles.loginBox}>
-      <div style={styles.toggleContainer}>
-        <button
-          style={{
-            ...styles.toggleButton,
-            ...(loginMode === "otp" ? styles.activeToggle : {}),
-          }}
-          onClick={() => setLoginMode("otp")}
-        >
-          OTP Login
-        </button>
-
-        <button
-          style={{
-            ...styles.toggleButton,
-            ...(loginMode === "student" ? styles.activeToggle : {}),
-          }}
-          onClick={() => setLoginMode("student")}
-        >
-          ID Login
-        </button>
-      </div>
-        {loginMode === "otp" && (
-  <>
-    <h2>Login with OTP</h2>
-
-    <input
-      type="email"
-      style={styles.input}
-      placeholder="Enter your email"
-      value={email}
-      onChange={(e) => setEmail(e.target.value)}
-      onKeyDown={handleEnterKey}
-      disabled={otpSent}
-    />
-
-    {!otpSent && (
-      <button
-        style={{ ...styles.button, ...styles.gButton }}
-        onClick={generateOtp}
-        disabled={!email}
+      
+ 
+       <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleStudentLogin();
+        }}
       >
-        Generate OTP
-      </button>
-    )}
+        <h2>Login with ID</h2>
 
-    {otpSent && timer === 0 && (
-      <button
-        style={{ ...styles.button, background: "#ffc107" }}
-        onClick={generateOtp}
-      >
-        Resend OTP
-      </button>
-    )}
+        <input
+          style={styles.input}
+          placeholder="Student ID"
+          value={studentId}
+          onChange={(e) => setStudentId(e.target.value)}
+        />
 
-    {otpSent && (
-      <input
-        style={styles.input}
-        placeholder="Enter OTP"
-        value={otp}
-        onChange={(e) => setOtp(e.target.value)}
-        onKeyDown={handleEnterKey}
-      />
-    )}
+        <input
+          type="password"
+          style={styles.input}
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-    {otpSent && timer > 0 && (
-      <p>
-        Resend in{" "}
-        {String(Math.floor(timer / 60)).padStart(2, "0")}:
-        {String(timer % 60).padStart(2, "0")}
-      </p>
-    )}
-
-    <button
-      style={{
-        ...styles.button,
-        ...styles.eButton,
-        opacity: loginDisabled ? 0.6 : 1,
-        cursor: loginDisabled ? "not-allowed" : "pointer",
-      }}
-      disabled={loginDisabled}
-      onClick={handleLogin}
-    >
-      Login
-    </button>
-  </>
-)}
-       {loginMode === "student" && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleStudentLogin();
-            }}
-          >
-            <h2>Login With ID/Password</h2>
-
-            <input
-              style={styles.input}
-              placeholder="Student ID"
-              value={studentId}
-              onChange={(e) => setStudentId(e.target.value)}
-            />
-
-            <input
-              type="password"
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-
-            <button
-              type="submit"
-              style={{
-                ...styles.button,
-                backgroundColor: "#28a745",
-              }}
-            >
-              Login
-            </button>
-          </form>
-        )}
+        <button
+          type="submit"
+          style={{
+            ...styles.button,
+            backgroundColor: "#28a745",
+          }}
+        >
+          Login
+        </button>
+      </form>
 
         {error && <p style={styles.error}>{error}</p>}
       </div>
