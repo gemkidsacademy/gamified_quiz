@@ -50,6 +50,17 @@ export default function AddTerm({ loggedInUser, onBack }) {
         Create a new academic term for this centre. The system will automatically
         calculate the number of weeks between the start and end dates.
       </p>
+      <p
+        className="warning-note"
+        style={{
+          color: "#d97706",
+          fontWeight: "600",
+          marginTop: "8px",
+        }}
+      >
+        Note: These term values do not need to match the chatbot files in the Google
+        Drive folder.
+      </p>
 
       <form onSubmit={handleSave}>
         <div className="form-group">
@@ -95,20 +106,7 @@ export default function AddTerm({ loggedInUser, onBack }) {
         </div>
       </form>
 
-      <div className="assumption-box">
-        <h3>Implementation Assumption (Please Confirm)</h3>
-        <ul>
-          <li>
-            A new academic term can be added at any time.
-          </li>
-          <li>
-            Saving a term does not necessarily make it the current active term.
-          </li>
-          <li>
-            The current active term is managed from the Manage Terms screen.
-          </li>
-        </ul>
-      </div>
+      
     </div>
   );
 }
