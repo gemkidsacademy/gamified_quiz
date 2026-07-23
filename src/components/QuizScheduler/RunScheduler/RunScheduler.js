@@ -1,9 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./RunScheduler.css";
 
 export default function RunScheduler({ onBack }) {
     const [isRunning, setIsRunning] = useState(false);
+    const [runDate, setRunDate] = useState(
+        new Date().toISOString().split("T")[0]
+    );
 
+    const [selectedDay, setSelectedDay] = useState("");
     const scheduler = {
 
         enabled: true,
@@ -30,6 +34,20 @@ export default function RunScheduler({ onBack }) {
         alert("Scheduler started.");
 
     };
+    useEffect(() => {
+        if (!runDate) return;
+
+        const day = new Date(runDate).toLocaleDateString(
+            "en-AU",
+            {
+                weekday: "long",
+                timeZone: "Australia/Sydney",
+            }
+        );
+
+        setSelectedDay(day);
+
+    }, [runDate]);
 
     return (
 

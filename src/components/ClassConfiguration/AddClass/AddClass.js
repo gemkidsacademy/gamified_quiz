@@ -9,9 +9,7 @@ export default function AddClass({
 }) {
     const server = process.env.REACT_APP_API_BASE;
 
-    const [category, setCategory] = useState(
-        editingClass?.category || ""
-    );
+    
 
     const [classYear, setClassYear] = useState(
         editingClass?.class_year || editingClass?.year || ""
@@ -21,6 +19,10 @@ export default function AddClass({
         editingClass?.class_day || editingClass?.day || ""
     );
 
+    const [category, setCategory] = useState(
+        editingClass?.category || ""
+    );
+
     const [categories, setCategories] = useState([]);
     const [classYears, setClassYears] = useState([]);
     const [classDays, setClassDays] = useState([]);
@@ -28,23 +30,25 @@ export default function AddClass({
     const loadCategories = async () => {
         try {
             const res = await fetch(
-                `${server}/class-configuration/categories`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        center_code: loggedInUser.center_code,
-                    }),
-                }
+                `${server}/classes/${loggedInUser.center_code}`
             );
+
+            if (!res.ok) {
+                throw new Error("Failed to load classes");
+            }
 
             const data = await res.json();
 
-            if (res.ok) {
-                setCategories(data.categories || []);
-            }
+            // Backend returns:
+            // [
+            //   { id:1, class_name:"Selective" },
+            //   { id:2, class_name:"NAPLAN" }
+            // ]
+
+            setCategories(
+                data.map((item) => item.class_name)
+            );
+
         } catch (err) {
             console.error(err);
         }

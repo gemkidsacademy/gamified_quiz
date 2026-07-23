@@ -13,6 +13,11 @@ export default function ConfigureScheduler({
     const [enabled, setEnabled] = useState(true);
 
     const [runTime, setRunTime] = useState("18:00");
+    const [runDate, setRunDate] = useState(
+        new Date().toISOString().split("T")[0]
+    );
+
+    const [selectedDay, setSelectedDay] = useState("");
 
     const [days, setDays] = useState({
         monday: true,
@@ -23,6 +28,21 @@ export default function ConfigureScheduler({
         saturday: false,
         sunday: false,
     });
+    useEffect(() => {
+
+    if (!runDate) return;
+
+        const day = new Date(runDate).toLocaleDateString(
+            "en-AU",
+            {
+                weekday: "long",
+                timeZone: "Australia/Sydney",
+            }
+        );
+
+        setSelectedDay(day);
+
+    }, [runDate]);
 
     useEffect(() => {
 
@@ -100,6 +120,7 @@ export default function ConfigureScheduler({
                 },
                 body: JSON.stringify({
                     center_code: loggedInUser.center_code,
+                    run_date: runDate,
                 }),
             }
         );
@@ -283,6 +304,57 @@ export default function ConfigureScheduler({
                         </label>
 
                     ))}
+
+                </div>
+
+            </div>
+            <div
+                style={{
+                    marginTop: "30px",
+                    padding: "20px",
+                    backgroundColor: "#f8f9fa",
+                    border: "1px solid #dee2e6",
+                    borderRadius: "8px",
+                }}
+            >
+
+                <h3>Manual Scheduler Run</h3>
+
+                <p>
+
+                    Select the date you want the scheduler to process.
+
+                </p>
+
+                <div className="form-group">
+
+                    <label>
+
+                        Run Date
+
+                    </label>
+
+                    <input
+                        type="date"
+                        value={runDate}
+                        onChange={(e) => setRunDate(e.target.value)}
+                    />
+
+                </div>
+
+                <div className="form-group">
+
+                    <label>
+
+                        Weekday
+
+                    </label>
+
+                    <div className="readonly-box">
+
+                        {selectedDay}
+
+                    </div>
 
                 </div>
 
