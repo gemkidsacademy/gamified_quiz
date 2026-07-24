@@ -9,7 +9,7 @@ export default function ConfigureScheduler({
     const server = process.env.REACT_APP_API_BASE;
     const [isSavingConfiguration, setIsSavingConfiguration] = useState(false);
     const [isRunningScheduler, setIsRunningScheduler] = useState(false);
-
+    const [runTime, setRunTime] = useState("18:00");
     const [enabled, setEnabled] = useState(true);
 
     const [runTime, setRunTime] = useState("18:00");
@@ -246,9 +246,9 @@ export default function ConfigureScheduler({
                 </label>
 
                 <input
-                type="time"
-                value="18:00"
-                disabled
+                    type="time"
+                    value={runTime}
+                    onChange={(e) => setRunTime(e.target.value)}
                 />
 
             </div>
