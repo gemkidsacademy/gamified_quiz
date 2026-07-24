@@ -12,7 +12,7 @@ export default function ConfigureScheduler({
     const [runTime, setRunTime] = useState("18:00");
     const [enabled, setEnabled] = useState(true);
 
-    const [runTime, setRunTime] = useState("18:00");
+    
     const [runDate, setRunDate] = useState(
         new Date().toISOString().split("T")[0]
     );
