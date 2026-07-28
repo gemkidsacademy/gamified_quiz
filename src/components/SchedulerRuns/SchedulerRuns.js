@@ -110,6 +110,7 @@ export default function SchedulerRuns({ loggedInUser }) {
                                 <th>ID</th>
                                 <th>Term</th>
                                 <th>Started at</th>
+                                <th>Trigger</th>
                                 <th>Day</th>
                                 <th>Session</th>
                                 <th>Total Classes</th>
@@ -125,7 +126,7 @@ export default function SchedulerRuns({ loggedInUser }) {
                         <tbody>
                             {runs.length === 0 ? (
                                 <tr>
-                                    <td colSpan="12" style={{ textAlign: "center" }}>
+                                    <td colSpan="13" style={{ textAlign: "center" }}>
                                         No scheduler runs found.
                                     </td>
                                 </tr>
@@ -139,6 +140,13 @@ export default function SchedulerRuns({ loggedInUser }) {
                                                 ? new Date(run.started_at).toLocaleString()
                                                 : "-"}
                                         </td>
+
+                                        <td>
+                                            {run.scheduler_trigger === "manual"
+                                                ? "Manual"
+                                                : "Automatic"}
+                                        </td>
+
                                         <td>{run.weekday}</td>
                                         <td>{run.current_session}</td>
                                         <td>{run.total_classes}</td>
