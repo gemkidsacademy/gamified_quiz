@@ -31,7 +31,7 @@ export default function ChatbotGamifiedQuiz({
 
   // ------------------ Fetch Quiz ------------------
   useEffect(() => {
-  if (!loggedInUser?.student_id) return;
+  if (!loggedInUser) return;
 
   if (hasFetchedQuizRef.current) return;
   hasFetchedQuizRef.current = true;
@@ -44,7 +44,12 @@ export default function ChatbotGamifiedQuiz({
       {
         sender: "bot",
         type: "welcome",
-        welcomeText: `Welcome, Dear ${loggedInUser.name}!`,
+        welcomeText:
+        `Welcome, Dear ${
+            loggedInUser.user_type === "guest"
+                ? loggedInUser.full_name
+                : loggedInUser.name
+        }!`,
         quote: null,
         author: "",
         footer: "Preparing today's quote and quiz...",
@@ -55,104 +60,183 @@ export default function ChatbotGamifiedQuiz({
 
     try {
 
-      // ------------------------------------
-      // Fetch quote and quiz in parallel
-      // ------------------------------------
-      const quotePromise = fetch(`${server}/student/gamified-welcome-quote`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          student_id: loggedInUser.student_id,
-        }),
-      });
+        //--------------------------------------------------
+        // Decide endpoints based on user type
+        //--------------------------------------------------
 
-      const quizPromise = fetch(`${server}/student/current-gamified-quiz`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          student_id: loggedInUser.student_id,
-        }),
-      });
+        const isGuest = loggedInUser.user_type === "guest";
 
-      // Update welcome card with quote
-      const quoteResponse = await quotePromise;
+        const quoteEndpoint =
+          loggedInUser.user_type === "guest"
+              ? `${server}/guest/gamified-welcome-quote`
+              : `${server}/student/gamified-welcome-quote`;
 
-// Update welcome card with quote
-if (quoteResponse.ok) {
-    const quoteData = await quoteResponse.json();
+        const quizEndpoint = isGuest
+            ? `${server}/guest/current-gamified-quiz`
+            : `${server}/student/current-gamified-quiz`;
 
-    setMessages((prev) =>
-        prev.map((msg) =>
-            msg.type === "welcome"
-                ? {
-                    ...msg,
-                    quote: quoteData.quote,
-                    author: quoteData.author,
-                    footer: "Let's begin your weekly quiz.",
-                  }
-                : msg
-        )
-    );
-}
+        const quotePayload = isGuest
+          ? {
+              contact: loggedInUser.contact,
+          }
+          : {
+              student_id: loggedInUser.student_id,
+          };
 
-      // Read quiz response
-      const quizResponse = await quizPromise;
+        const quizPayload = isGuest
+          ? {
+              contact: loggedInUser.contact,
+              category: loggedInUser.category,
+              class_year: loggedInUser.class_year,
+          }
+          : {
+              student_id: loggedInUser.student_id,
+          };
 
-// Read quiz response
-if (!quizResponse.ok) {
-    throw new Error("Failed to fetch quiz");
-}
+        //--------------------------------------------------
+        // Fetch quote and quiz in parallel
+        //--------------------------------------------------
 
-const data = await quizResponse.json();
+        const quotePromise = fetch(quoteEndpoint, {
 
-setIsLoadingQuiz(false);
+            method: "POST",
 
-      // ------------------------------------
-      // If already attempted
-      // ------------------------------------
-      if (data.already_attempted) {
-      setMessages((prev) => {
-        const alreadyExists = prev.some(
-          (msg) => msg.sender === "bot" && msg.text === data.message
-        );
+            headers: {
+                "Content-Type": "application/json",
+            },
 
-        if (alreadyExists) return prev;
+            body: JSON.stringify(quotePayload),
 
-        return [
-          ...prev,
-          {
-            sender: "bot",
-            text: `${data.message} Your score: ${data.current_score}/${data.total_questions}`,
-          },
-        ];
-      });
+        });
 
-      setQuizCompleted(true);
-      setFinalScore(data.current_score);
-      setReviewData(data.review || []);
-      setCurrentQuestionIndex(null);
-      return;
-    }
+        const quizPromise = fetch(quizEndpoint, {
 
-    setQuiz(data);
+            method: "POST",
 
-    // ------------------------------------
-    // STEP 3: Append first question after welcome message
-    // ------------------------------------
-    if (data?.questions?.length > 0) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "bot",
-          text: data.questions[0].prompt,
-        },
-      ]);
-    }
-  } catch (err) {
+            headers: {
+                "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify(quizPayload),
+
+        });
+
+        //--------------------------------------------------
+        // Update welcome card with quote
+        //--------------------------------------------------
+
+        const quoteResponse = await quotePromise;
+
+        if (quoteResponse.ok) {
+
+            const quoteData = await quoteResponse.json();
+
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.type === "welcome"
+                        ? {
+                              ...msg,
+                              quote: quoteData.quote,
+                              author: quoteData.author,
+                              footer: "Let's begin your weekly quiz.",
+                          }
+                        : msg
+                )
+            );
+
+        }
+
+        //--------------------------------------------------
+        // Read quiz response
+        //--------------------------------------------------
+
+        const quizResponse = await quizPromise;
+
+        if (!quizResponse.ok) {
+
+            throw new Error("Failed to fetch quiz");
+
+        }
+
+        const data = await quizResponse.json();
+
+        setIsLoadingQuiz(false);
+
+        //--------------------------------------------------
+        // Already attempted
+        //--------------------------------------------------
+
+        if (data.already_attempted) {
+
+            setMessages((prev) => {
+
+                const alreadyExists = prev.some(
+
+                    (msg) =>
+                        msg.sender === "bot" &&
+                        msg.text === data.message
+
+                );
+
+                if (alreadyExists) return prev;
+
+                return [
+
+                    ...prev,
+
+                    {
+
+                        sender: "bot",
+
+                        text: `${data.message} Your score: ${data.current_score}/${data.total_questions}`,
+
+                    },
+
+                ];
+
+            });
+
+            setQuizCompleted(true);
+
+            setFinalScore(data.current_score);
+
+            setReviewData(data.review || []);
+
+            setCurrentQuestionIndex(null);
+
+            return;
+
+        }
+
+        //--------------------------------------------------
+        // Save quiz
+        //--------------------------------------------------
+
+        setQuiz(data);
+
+        //--------------------------------------------------
+        // Append first question
+        //--------------------------------------------------
+
+        if (data?.questions?.length > 0) {
+
+            setMessages((prev) => [
+
+                ...prev,
+
+                {
+
+                    sender: "bot",
+
+                    text: data.questions[0].prompt,
+
+                },
+
+            ]);
+
+        }
+
+    } catch (err) {
       console.error("Error fetching quiz:", err);
 
       setIsLoadingQuiz(false);
@@ -168,7 +252,7 @@ setIsLoadingQuiz(false);
 };
 
   fetchQuiz();
-}, [loggedInUser?.student_id, server]);
+}, [loggedInUser, server]);
 
   // ------------------ Helpers ------------------
   const parseBoldText = (text) => {
@@ -227,24 +311,47 @@ setIsLoadingQuiz(false);
   setIsWaiting(true);
 
   try {
-    const payload = {
-      student_id: loggedInUser.student_id,
-      question_index: Number(currentQuestionIndex),
-      selected_option: studentAnswer,
-    };
+    const payload =
+      loggedInUser.user_type === "guest"
+          ? {
+
+                contact: loggedInUser.contact,
+
+                question_index: Number(currentQuestionIndex),
+
+                selected_option: studentAnswer,
+
+            }
+          : {
+
+                student_id: loggedInUser.student_id,
+
+                question_index: Number(currentQuestionIndex),
+
+                selected_option: studentAnswer,
+
+            };
 
     console.log("Submitting payload:", payload);
 
-    const response = await fetch(
-      `${server}/student/submit-quiz-answer`,
-      {
-          method: "POST",
-          headers: {
-              "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-      }
-  );
+    const submitEndpoint =
+        loggedInUser.user_type === "guest"
+            ? `${server}/guest/submit-quiz-answer`
+            : `${server}/student/submit-quiz-answer`;
+
+    const response = await fetch(submitEndpoint, {
+
+        method: "POST",
+
+        headers: {
+
+            "Content-Type": "application/json",
+
+        },
+
+        body: JSON.stringify(payload),
+
+    });
 
     if (!response.ok) throw new Error(`Backend error: ${response.status}`);
     const data = await response.json();

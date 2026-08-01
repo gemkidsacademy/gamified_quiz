@@ -17,6 +17,7 @@ import ViewDoctors from "./components/ViewDoctors";
 import DeleteDoctor from "./components/DeleteDoctor";
 import ChatbotGamifiedQuiz from "./components/ChatbotGamifiedQuiz";
 import UsageDashboard from "./components/UsageDashboard";
+import GuestLoginPage from "./components/GuestLoginPage";
 
 // ===================== LOGIN PAGE =====================
 function LoginPage({ setIsLoggedIn, setLoggedInUser }) {
@@ -191,6 +192,15 @@ function App() {
             />
           }
         />
+        <Route
+            path="/guest"
+            element={
+                <GuestLoginPage
+                    setIsLoggedIn={setIsLoggedIn}
+                    setLoggedInUser={setLoggedInUser}
+                />
+            }
+        />
 
         <Route
           path="/AdminPanel"
@@ -250,9 +260,13 @@ function App() {
 
         <Route
           path="/quiz"
-          element={<ChatbotGamifiedQuiz
-            loggedInUser={loggedInUser}
-        />}
+          element={
+            <PrivateRoute isLoggedIn={isLoggedIn}>
+              <ChatbotGamifiedQuiz
+                loggedInUser={loggedInUser}
+              />
+            </PrivateRoute>
+          }
         />
       </Routes>
     </Router>
