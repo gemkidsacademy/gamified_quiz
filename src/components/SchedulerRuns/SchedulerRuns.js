@@ -171,66 +171,92 @@ export default function SchedulerRuns({ loggedInUser }) {
             </div>
 
             {selectedRun && (
-                <div className="scheduler-details-section">
-                    <h3>
-                        Run Details — Run #{selectedRun.id} ({selectedRun.run_date})
-                    </h3>
+                <div
+                    className="modal-overlay"
+                    onClick={() => {
+                        setSelectedRun(null);
+                        setSelectedRunId(null);
+                        setDetails([]);
+                    }}
+                >
+                    <div
+                        className="scheduler-details-modal"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            className="close-button"
+                            onClick={() => {
+                                setSelectedRun(null);
+                                setSelectedRunId(null);
+                                setDetails([]);
+                            }}
+                        >
+                            ✕
+                        </button>
 
-                    <div className="scheduler-run-summary">
-                        <p><strong>Center:</strong> {selectedRun.center_code}</p>
-                        <p><strong>Term:</strong> {selectedRun.term_name}</p>
-                        <p><strong>Trigger:</strong> {selectedRun.scheduler_trigger}</p>
-                        <p><strong>Weekday:</strong> {selectedRun.weekday}</p>
-                        <p><strong>Session:</strong> {selectedRun.current_session}</p>
-                        <p><strong>Status:</strong> {selectedRun.status}</p>
-                        <p><strong>Message:</strong> {selectedRun.message}</p>
-                    </div>
+                        <h3>
+                            Run Details — Run #{selectedRun.id} ({selectedRun.run_date})
+                        </h3>
 
-                    {loadingDetails ? (
-                        <p>Loading run details...</p>
-                    ) : (
-                        <table className="scheduler-details-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Category</th>
-                                    <th>Year</th>
-                                    <th>Day</th>
-                                    <th>Session</th>
-                                    <th>Topic</th>
-                                    <th>Selected Activity</th>
-                                    <th>Generated Quiz ID</th>
-                                    <th>Status</th>
-                                    <th>Message</th>
-                                </tr>
-                            </thead>
+                        <div className="scheduler-run-summary">
+                            <p><strong>Center:</strong> {selectedRun.center_code}</p>
+                            <p><strong>Term:</strong> {selectedRun.term_name}</p>
+                            <p><strong>Trigger:</strong> {selectedRun.scheduler_trigger}</p>
+                            <p><strong>Weekday:</strong> {selectedRun.weekday}</p>
+                            <p><strong>Session:</strong> {selectedRun.current_session}</p>
+                            <p><strong>Status:</strong> {selectedRun.status}</p>
+                            <p><strong>Message:</strong> {selectedRun.message}</p>
+                        </div>
 
-                            <tbody>
-                                {details.length === 0 ? (
+                        {loadingDetails ? (
+                            <p>Loading run details...</p>
+                        ) : (
+                            <table className="scheduler-details-table">
+                                <thead>
                                     <tr>
-                                        <td colSpan="10" style={{ textAlign: "center" }}>
-                                            No detail rows found for this run.
-                                        </td>
+                                        <th>ID</th>
+                                        <th>Category</th>
+                                        <th>Year</th>
+                                        <th>Day</th>
+                                        <th>Session</th>
+                                        <th>Topic</th>
+                                        <th>Selected Activity</th>
+                                        <th>Generated Quiz ID</th>
+                                        <th>Status</th>
+                                        <th>Message</th>
                                     </tr>
-                                ) : (
-                                    details.map((row) => (
-                                        <tr key={row.id}>
-                                            <td>{row.id}</td>
-                                            <td>{row.category}</td>
-                                            <td>{row.class_year}</td>
-                                            <td>{row.class_day}</td>
-                                            <td>{row.session}</td>
-                                            <td>{row.topic}</td>
-                                            <td>{row.selected_activity_type}</td>
-                                            <td>{row.generated_quiz_id || "-"}</td>
-                                            <td>{row.status}</td>
-                                            <td>{row.message}</td>
+                                </thead>
+
+                                <tbody>
+                                    {details.length === 0 ? (
+                                        <tr>
+                                            <td
+                                                colSpan="10"
+                                                style={{ textAlign: "center" }}
+                                            >
+                                                No detail rows found for this run.
+                                            </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    )}
+                                    ) : (
+                                        details.map((row) => (
+                                            <tr key={row.id}>
+                                                <td>{row.id}</td>
+                                                <td>{row.category}</td>
+                                                <td>{row.class_year}</td>
+                                                <td>{row.class_day}</td>
+                                                <td>{row.session}</td>
+                                                <td>{row.topic}</td>
+                                                <td>{row.selected_activity_type}</td>
+                                                <td>{row.generated_quiz_id || "-"}</td>
+                                                <td>{row.status}</td>
+                                                <td>{row.message}</td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

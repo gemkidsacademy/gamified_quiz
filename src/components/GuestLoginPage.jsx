@@ -14,7 +14,7 @@ export default function GuestLoginPage({
 
     const [contact, setContact] = useState("");
 
-    const [category, setCategory] = useState("");
+    const [category] = useState("Foundational");
 
     const [classYear, setClassYear] = useState("");
 
@@ -26,8 +26,7 @@ export default function GuestLoginPage({
 
     const [contactMethod, setContactMethod] = useState("email");
 
-    const [loginOptions, setLoginOptions] = useState([]);
-
+    
     const [availableYears, setAvailableYears] = useState([]);
 
     const [loadingOptions, setLoadingOptions] = useState(true);
@@ -223,36 +222,39 @@ export default function GuestLoginPage({
     };
     useEffect(() => {
 
-        loadLoginOptions();
+        loadClassYears();
 
     }, []);
 
-    const loadLoginOptions = async () => {
-
+    const loadClassYears = async () => {
         try {
 
             const res = await fetch(
-                `${API_BASE}/guest/login-options`
+                `${API_BASE}/class-years-exam-module?center_code=MP001&class_name=Foundational`
             );
 
             const data = await res.json();
 
-            if (!res.ok) return;
+            if (!res.ok) {
+                setError(data.detail || "Unable to load class years.");
+                return;
+            }
 
-            setLoginOptions(data);
+            setAvailableYears(
+                data.map(x => x.year_name)
+            );
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.error(err);
 
-        }
-        finally {
+            setError("Unable to load class years.");
+
+        } finally {
 
             setLoadingOptions(false);
 
         }
-
     };
     return (
 
@@ -351,49 +353,15 @@ export default function GuestLoginPage({
                     <select
                         style={styles.input}
                         value={category}
-                        onChange={(e) => {
-
-                            const selectedCategory = e.target.value;
-
-                            setCategory(selectedCategory);
-
-                            setClassYear("");
-
-                            const years = loginOptions
-                                .filter(
-                                    x => x.category === selectedCategory
-                                )
-                                .map(
-                                    x => x.class_year
-                                );
-
-                            setAvailableYears(years);
-
-                        }}
+                        disabled
                     >
-
-                        <option value="">
-                            Select Category
+                        <option value="Foundational">
+                            Foundational
                         </option>
-
-                        {[...new Set(loginOptions.map(x => x.category))]
-                            .map(category => (
-
-                                <option
-                                    key={category}
-                                    value={category}
-                                >
-                                    {category}
-                                </option>
-
-                            ))
-                        }
-
                     </select>
-
                     <select
                         style={styles.input}
-                        disabled={!category}
+                        disabled={loadingOptions}
                         value={classYear}
                         onChange={(e) =>
                             setClassYear(e.target.value)
