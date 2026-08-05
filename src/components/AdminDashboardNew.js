@@ -10,6 +10,7 @@ import SessionTopicsImport from "./SessionTopicsImport/SessionTopicsImport";
 import Leaderboard from "./Leaderboard/Leaderboard";
 import ActivityTypes from "./ActivityTypes/ActivityTypes";
 import QuizScheduler from "./QuizScheduler/QuizScheduler";
+import GenerateGamifiedQuizzes from "./GenerateGamifiedQuizzes/GenerateGamifiedQuizzes";
 import SchedulerRuns from "./SchedulerRuns/SchedulerRuns";
 export default function AdminDashboardNew({ loggedInUser })  {
   
@@ -89,6 +90,14 @@ export default function AdminDashboardNew({ loggedInUser })  {
           Scheduler Runs
         </div>
         <div
+          className={`tab-item ${
+            activeTab === "generate-quizzes" ? "active" : ""
+          }`}
+          onClick={() => setActiveTab("generate-quizzes")}
+        >
+          Generate Quizzes
+        </div>
+        <div
             className={`tab-item ${
                 activeTab === "leaderboard" ? "active" : ""
             }`}
@@ -142,6 +151,13 @@ export default function AdminDashboardNew({ loggedInUser })  {
         {activeTab === "scheduler-runs" && (
           <div className="tab-panel">
             <SchedulerRuns loggedInUser={loggedInUser} />
+          </div>
+        )}
+        {activeTab === "generate-quizzes" && (
+          <div className="tab-panel">
+            <GenerateGamifiedQuizzes
+              loggedInUser={loggedInUser}
+            />
           </div>
         )}
         {activeTab === "leaderboard" && (

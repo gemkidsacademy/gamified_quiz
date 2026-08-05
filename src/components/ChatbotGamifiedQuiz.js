@@ -31,156 +31,244 @@ export default function ChatbotGamifiedQuiz({
 
   // ------------------ Fetch Quiz ------------------
   useEffect(() => {
-  if (!loggedInUser) return;
 
-  if (hasFetchedQuizRef.current) return;
-  hasFetchedQuizRef.current = true;
+    if (!loggedInUser) return;
 
-  const fetchQuiz = async () => {
-    console.log("[DEBUG] loggedInUser:", loggedInUser);
+    if (hasFetchedQuizRef.current) return;
 
-    // Show welcome card immediately
-    setMessages([
-      {
-        sender: "bot",
-        type: "welcome",
-        welcomeText:
-        `Welcome, Dear ${
-            loggedInUser.user_type === "guest"
-                ? loggedInUser.full_name
-                : loggedInUser.name
-        }!`,
-        quote: null,
-        author: "",
-        footer: "Preparing today's quote and quiz...",
-      },
-    ]);
+    hasFetchedQuizRef.current = true;
 
-    setIsLoadingQuiz(true);
+    const fetchQuiz = async () => {
 
-    try {
+        console.log("[DEBUG] loggedInUser:", loggedInUser);
 
-        //--------------------------------------------------
-        // Decide endpoints based on user type
-        //--------------------------------------------------
+        // -----------------------------------------
+        // Show welcome card immediately
+        // -----------------------------------------
 
-        const isGuest = loggedInUser.user_type === "guest";
-
-        const quoteEndpoint =
-          loggedInUser.user_type === "guest"
-              ? `${server}/guest/gamified-welcome-quote`
-              : `${server}/student/gamified-welcome-quote`;
-
-        const quizEndpoint = isGuest
-            ? `${server}/guest/current-gamified-quiz`
-            : `${server}/student/current-gamified-quiz`;
-
-        const quotePayload = isGuest
-          ? {
-              contact: loggedInUser.contact,
-          }
-          : {
-              student_id: loggedInUser.student_id,
-          };
-
-        const quizPayload = isGuest
-          ? {
-              contact: loggedInUser.contact,
-              category: loggedInUser.category,
-              class_year: loggedInUser.class_year,
-          }
-          : {
-              student_id: loggedInUser.student_id,
-          };
-
-        //--------------------------------------------------
-        // Fetch quote and quiz in parallel
-        //--------------------------------------------------
-
-        const quotePromise = fetch(quoteEndpoint, {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json",
+        setMessages([
+            {
+                sender: "bot",
+                type: "welcome",
+                welcomeText: `Welcome, Dear ${
+                    loggedInUser.user_type === "guest"
+                        ? loggedInUser.full_name
+                        : loggedInUser.name
+                }!`,
+                quote: null,
+                author: "",
+                footer: "Preparing today's quote and quiz...",
             },
+        ]);
 
-            body: JSON.stringify(quotePayload),
+        setIsLoadingQuiz(true);
 
-        });
+        try {
 
-        const quizPromise = fetch(quizEndpoint, {
+            // -----------------------------------------
+            // Decide endpoints
+            // -----------------------------------------
 
-            method: "POST",
+            const isGuest =
+                loggedInUser.user_type === "guest";
 
-            headers: {
-                "Content-Type": "application/json",
-            },
+            const quoteEndpoint = isGuest
+                ? `${server}/guest/gamified-welcome-quote`
+                : `${server}/student/gamified-welcome-quote`;
 
-            body: JSON.stringify(quizPayload),
+            const quizEndpoint = isGuest
+                ? `${server}/guest/current-gamified-quiz`
+                : `${server}/student/current-gamified-quiz`;
 
-        });
+            const quotePayload = isGuest
+                ? {
+                    contact: loggedInUser.contact,
+                }
+                : {
+                    student_id: loggedInUser.student_id,
+                };
 
-        //--------------------------------------------------
-        // Update welcome card with quote
-        //--------------------------------------------------
+            const quizPayload = isGuest
+                ? {
+                    contact: loggedInUser.contact,
+                    category: loggedInUser.category,
+                    class_year: loggedInUser.class_year,
+                }
+                : {
+                    student_id: loggedInUser.student_id,
+                };
 
-        const quoteResponse = await quotePromise;
+            console.log("=================================");
+            console.log("FETCHING QUIZ");
+            console.log("=================================");
+            console.log("Quote Endpoint :", quoteEndpoint);
+            console.log("Quiz Endpoint  :", quizEndpoint);
+            console.log("Quiz Payload   :", quizPayload);
 
-        if (quoteResponse.ok) {
+            // -----------------------------------------
+            // Fire both requests
+            // -----------------------------------------
 
-            const quoteData = await quoteResponse.json();
-
-            setMessages((prev) =>
-                prev.map((msg) =>
-                    msg.type === "welcome"
-                        ? {
-                              ...msg,
-                              quote: quoteData.quote,
-                              author: quoteData.author,
-                              footer: "Let's begin your weekly quiz.",
-                          }
-                        : msg
-                )
+            const quotePromise = fetch(
+                quoteEndpoint,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(quotePayload),
+                }
             );
 
-        }
+            const quizPromise = fetch(
+                quizEndpoint,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(quizPayload),
+                }
+            );
 
-        //--------------------------------------------------
-        // Read quiz response
-        //--------------------------------------------------
+            // -----------------------------------------
+            // Quote
+            // -----------------------------------------
 
-        const quizResponse = await quizPromise;
+            const quoteResponse = await quotePromise;
 
-        if (!quizResponse.ok) {
+            console.log(
+                "Quote Response Status:",
+                quoteResponse.status
+            );
 
-            throw new Error("Failed to fetch quiz");
+            if (quoteResponse.ok) {
 
-        }
+                const quoteData =
+                    await quoteResponse.json();
 
-        const data = await quizResponse.json();
-
-        setIsLoadingQuiz(false);
-
-        //--------------------------------------------------
-        // Already attempted
-        //--------------------------------------------------
-
-        if (data.already_attempted) {
-
-            setMessages((prev) => {
-
-                const alreadyExists = prev.some(
-
-                    (msg) =>
-                        msg.sender === "bot" &&
-                        msg.text === data.message
-
+                console.log(
+                    "Quote Response:",
+                    quoteData
                 );
 
-                if (alreadyExists) return prev;
+                setMessages((prev) =>
+                    prev.map((msg) =>
+                        msg.type === "welcome"
+                            ? {
+                                  ...msg,
+                                  quote: quoteData.quote,
+                                  author: quoteData.author,
+                                  footer:
+                                      "Let's begin your weekly quiz.",
+                              }
+                            : msg
+                    )
+                );
 
-                return [
+            }
+
+            // -----------------------------------------
+            // Quiz
+            // -----------------------------------------
+
+            const quizResponse = await quizPromise;
+
+            console.log(
+                "Quiz Response Status:",
+                quizResponse.status
+            );
+
+            const data =
+                await quizResponse.json();
+
+            console.log(
+                "Quiz Response:",
+                data
+            );
+
+            if (!quizResponse.ok) {
+
+                throw new Error(
+                    data.detail || "Failed to fetch quiz"
+                );
+
+            }
+
+            setIsLoadingQuiz(false);
+
+            // -----------------------------------------
+            // Already attempted
+            // -----------------------------------------
+
+            if (data.already_attempted) {
+
+                console.log(
+                    "Quiz already attempted."
+                );
+
+                setMessages((prev) => {
+
+                    const alreadyExists = prev.some(
+
+                        (msg) =>
+                            msg.sender === "bot" &&
+                            msg.text === data.message
+
+                    );
+
+                    if (alreadyExists) return prev;
+
+                    return [
+
+                        ...prev,
+
+                        {
+                            sender: "bot",
+                            text: `${data.message} Your score: ${data.current_score}/${data.total_questions}`,
+                        },
+
+                    ];
+
+                });
+
+                setQuizCompleted(true);
+
+                setFinalScore(data.current_score);
+
+                setReviewData(data.review || []);
+
+                setCurrentQuestionIndex(null);
+
+                return;
+
+            }
+
+            // -----------------------------------------
+            // Save quiz
+            // -----------------------------------------
+
+            console.log(
+                "Quiz loaded successfully."
+            );
+
+            setQuiz(data);
+
+            // -----------------------------------------
+            // Show first question
+            // -----------------------------------------
+
+            if (
+                data.questions &&
+                data.questions.length > 0
+            ) {
+
+                console.log(
+                    "First Question:",
+                    data.questions[0]
+                );
+
+                setMessages((prev) => [
 
                     ...prev,
 
@@ -188,37 +276,23 @@ export default function ChatbotGamifiedQuiz({
 
                         sender: "bot",
 
-                        text: `${data.message} Your score: ${data.current_score}/${data.total_questions}`,
+                        text: data.questions[0].prompt,
 
                     },
 
-                ];
+                ]);
 
-            });
-
-            setQuizCompleted(true);
-
-            setFinalScore(data.current_score);
-
-            setReviewData(data.review || []);
-
-            setCurrentQuestionIndex(null);
-
-            return;
+            }
 
         }
+        catch (err) {
 
-        //--------------------------------------------------
-        // Save quiz
-        //--------------------------------------------------
+            console.error(
+                "Error fetching quiz:",
+                err
+            );
 
-        setQuiz(data);
-
-        //--------------------------------------------------
-        // Append first question
-        //--------------------------------------------------
-
-        if (data?.questions?.length > 0) {
+            setIsLoadingQuiz(false);
 
             setMessages((prev) => [
 
@@ -228,7 +302,7 @@ export default function ChatbotGamifiedQuiz({
 
                     sender: "bot",
 
-                    text: data.questions[0].prompt,
+                    text: "Sorry, no quiz available right now.",
 
                 },
 
@@ -236,24 +310,11 @@ export default function ChatbotGamifiedQuiz({
 
         }
 
-    } catch (err) {
-      console.error("Error fetching quiz:", err);
+    };
 
-      setIsLoadingQuiz(false);
+    fetchQuiz();
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "bot",
-          text: "Sorry, no quiz available right now.",
-        },
-      ]);
-    }
-};
-
-  fetchQuiz();
 }, [loggedInUser, server]);
-
   // ------------------ Helpers ------------------
   const parseBoldText = (text) => {
     const regex = /\*\*(.+?)\*\*/g;
