@@ -329,7 +329,7 @@ export default function GuestLoginPage({
 
                             }}
                         >
-                            WhatsApp
+                            SMS
                         </button>
 
                     </div>
@@ -350,15 +350,7 @@ export default function GuestLoginPage({
                         onChange={(e) => setContact(e.target.value)}
                     />
 
-                    <select
-                        style={styles.input}
-                        value={category}
-                        disabled
-                    >
-                        <option value="Foundational">
-                            Foundational
-                        </option>
-                    </select>
+                   
                     <select
                         style={styles.input}
                         disabled={loadingOptions}

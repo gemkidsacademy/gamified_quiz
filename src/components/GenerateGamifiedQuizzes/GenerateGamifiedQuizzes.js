@@ -14,7 +14,7 @@ export default function GenerateGamifiedQuizzes() {
     const [category, setCategory] = useState("");
     const [classYear, setClassYear] = useState("");
     const [classDay, setClassDay] = useState("");
-    const [session, setSession] = useState("");
+    
 
     const [topic, setTopic] = useState("");
     const [activityType, setActivityType] = useState("");
@@ -22,12 +22,36 @@ export default function GenerateGamifiedQuizzes() {
     const [message, setMessage] = useState("");
     const [categories, setCategories] = useState([]);
     const [classDays, setClassDays] = useState([]);
-    const [sessions, setSessions] = useState([]);
+    
     const [classYears, setClassYears] = useState([]);
     const server = process.env.REACT_APP_API_BASE;
 
 
 const handleGenerate = async () => {
+    if (!category) {
+        alert("Please select a category.");
+        return;
+    }
+
+    if (!classYear) {
+        alert("Please select a class year.");
+        return;
+    }
+
+    if (!classDay) {
+        alert("Please select a class day.");
+        return;
+    }
+
+    if (!activityType.trim()) {
+        alert("Please enter an activity type.");
+        return;
+    }
+
+    if (!topic.trim()) {
+        alert("Please enter a topic.");
+        return;
+    }
 
     try {
 
@@ -50,8 +74,6 @@ const handleGenerate = async () => {
                     class_year: classYear,
 
                     class_day: classDay,
-
-                    session: Number(session),
 
                     activity_type: activityType,
 
@@ -90,35 +112,10 @@ const handleGenerate = async () => {
 
         loadCategories();
 
-        loadSessions();
+        
 
     }, []);
-    async function loadSessions() {
-
-    try {
-
-        const response = await fetch(
-
-            `${server}/admin/gamified/sessions`
-
-        );
-
-        const data = await response.json();
-
-        if (response.ok) {
-
-            setSessions(data.sessions);
-
-        }
-
-    }
-    catch (err) {
-
-        console.error(err);
-
-    }
-
-}
+    
     async function loadClassDays(selectedCategory, selectedClassYear) {
 
     try {
@@ -260,10 +257,11 @@ const handleGenerate = async () => {
 
                     setClassYear("");
                     setClassDay("");
-                    setSession("");
 
                     setClassYears([]);
                     setClassDays([]);
+
+                    setMessage("");
 
                     loadClassYears(value);
 
@@ -298,9 +296,10 @@ const handleGenerate = async () => {
                     setClassYear(value);
 
                     setClassDay("");
-                    setSession("");
 
                     setClassDays([]);
+
+                    setMessage("");
 
                     loadClassDays(category, value);
 
@@ -328,7 +327,13 @@ const handleGenerate = async () => {
                 select
                 margin="normal"
                 value={classDay}
-                onChange={(e) => setClassDay(e.target.value)}
+                onChange={(e) => {
+
+                    setClassDay(e.target.value);
+
+                    setMessage("");
+
+                }}
             >
 
                 {
@@ -346,36 +351,17 @@ const handleGenerate = async () => {
 
             </TextField>
 
-            <TextField
-                fullWidth
-                label="Session"
-                select
-                margin="normal"
-                value={session}
-                onChange={(e) => setSession(e.target.value)}
-            >
-
-                {
-                    sessions.map((item) => (
-
-                        <MenuItem
-                            key={item}
-                            value={item}
-                        >
-                            Session {item}
-                        </MenuItem>
-
-                    ))
-                }
-
-            </TextField>
+            
 
             <TextField
                 fullWidth
                 margin="normal"
                 label="Activity Type"
                 value={activityType}
-                onChange={(e) => setActivityType(e.target.value)}
+                onChange={(e) => {
+                    setActivityType(e.target.value);
+                    setMessage("");
+                }}
             />
 
             <TextField
@@ -383,7 +369,10 @@ const handleGenerate = async () => {
                 margin="normal"
                 label="Topic"
                 value={topic}
-                onChange={(e) => setTopic(e.target.value)}
+                onChange={(e) => {
+                    setTopic(e.target.value);
+                    setMessage("");
+                }}
             />
 
             <Box mt={3}>
