@@ -12,14 +12,15 @@ import ActivityTypes from "./ActivityTypes/ActivityTypes";
 import QuizScheduler from "./QuizScheduler/QuizScheduler";
 import GenerateGamifiedQuizzes from "./GenerateGamifiedQuizzes/GenerateGamifiedQuizzes";
 import SchedulerRuns from "./SchedulerRuns/SchedulerRuns";
-export default function AdminDashboardNew({ loggedInUser })  {
-  
-    // Dashboard is now the default tab
+import GuestCredentials from "./GuestCredentials/GuestCredentials";
+
+export default function AdminDashboardNew({ loggedInUser }) {
+
+  // Dashboard is now the default tab
   const [activeTab, setActiveTab] = useState("dashboard");
-  
 
   return (
-    <div className="admin-dashboard">
+    <div>
 
       <h2 className="dashboard-title">
         Gamified Quiz Administration
@@ -28,14 +29,15 @@ export default function AdminDashboardNew({ loggedInUser })  {
       {/* Navigation */}
 
       <div className="tab-nav">
+
         <div
           className={`tab-item ${
             activeTab === "dashboard" ? "active" : ""
           }`}
           onClick={() => setActiveTab("dashboard")}
-          >
+        >
           Dashboard
-          </div>
+        </div>
 
         <div
           className={`tab-item ${
@@ -81,6 +83,7 @@ export default function AdminDashboardNew({ loggedInUser })  {
         >
           Scheduler
         </div>
+
         <div
           className={`tab-item ${
             activeTab === "scheduler-runs" ? "active" : ""
@@ -89,6 +92,7 @@ export default function AdminDashboardNew({ loggedInUser })  {
         >
           Scheduler Runs
         </div>
+
         <div
           className={`tab-item ${
             activeTab === "generate-quizzes" ? "active" : ""
@@ -97,13 +101,25 @@ export default function AdminDashboardNew({ loggedInUser })  {
         >
           Generate Quizzes
         </div>
+
         <div
-            className={`tab-item ${
-                activeTab === "leaderboard" ? "active" : ""
-            }`}
-            onClick={() => setActiveTab("leaderboard")}
+          className={`tab-item ${
+            activeTab === "leaderboard" ? "active" : ""
+          }`}
+          onClick={() => setActiveTab("leaderboard")}
         >
-            Leaderboard
+          Leaderboard
+        </div>
+
+        {/* NEW: Guest Credentials */}
+
+        <div
+          className={`tab-item ${
+            activeTab === "guest-credentials" ? "active" : ""
+          }`}
+          onClick={() => setActiveTab("guest-credentials")}
+        >
+          Guest Credentials
         </div>
 
       </div>
@@ -111,6 +127,7 @@ export default function AdminDashboardNew({ loggedInUser })  {
       {/* Content */}
 
       <div className="tab-content">
+
         {activeTab === "dashboard" && (
           <div className="tab-panel">
             <Dashboard loggedInUser={loggedInUser} />
@@ -125,34 +142,42 @@ export default function AdminDashboardNew({ loggedInUser })  {
 
         {activeTab === "class-configuration" && (
           <div className="tab-panel">
-            <ClassConfiguration loggedInUser={loggedInUser}/>
+            <ClassConfiguration loggedInUser={loggedInUser} />
           </div>
         )}
 
         {activeTab === "session-topics" && (
           <div className="tab-panel">
-            <SessionTopicsImport loggedInUser={loggedInUser}/>
-                      </div>
+            <SessionTopicsImport
+              loggedInUser={loggedInUser}
+            />
+          </div>
         )}
 
         {activeTab === "activity-types" && (
           <div className="tab-panel">
-            <ActivityTypes loggedInUser={loggedInUser}/>
-            
+            <ActivityTypes
+              loggedInUser={loggedInUser}
+            />
           </div>
         )}
 
         {activeTab === "scheduler" && (
           <div className="tab-panel">
-            <QuizScheduler loggedInUser={loggedInUser}/>
-            
+            <QuizScheduler
+              loggedInUser={loggedInUser}
+            />
           </div>
         )}
+
         {activeTab === "scheduler-runs" && (
           <div className="tab-panel">
-            <SchedulerRuns loggedInUser={loggedInUser} />
+            <SchedulerRuns
+              loggedInUser={loggedInUser}
+            />
           </div>
         )}
+
         {activeTab === "generate-quizzes" && (
           <div className="tab-panel">
             <GenerateGamifiedQuizzes
@@ -160,12 +185,23 @@ export default function AdminDashboardNew({ loggedInUser })  {
             />
           </div>
         )}
+
         {activeTab === "leaderboard" && (
-            <div className="tab-panel">
-                <Leaderboard
-                    loggedInUser={loggedInUser}
-                />
-            </div>
+          <div className="tab-panel">
+            <Leaderboard
+              loggedInUser={loggedInUser}
+            />
+          </div>
+        )}
+
+        {/* NEW: Guest Credentials */}
+
+        {activeTab === "guest-credentials" && (
+          <div className="tab-panel">
+            <GuestCredentials
+              loggedInUser={loggedInUser}
+            />
+          </div>
         )}
 
       </div>
