@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Homework Support - Parent Verification</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f7fb;
+            color: #111827;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            padding: 30px;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 560px;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 32px;
+
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .brand p {
+            margin: 8px 0 0;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .session-info {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 24px;
+        }
+
+        .session-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #111827;
+        }
+
+        .session-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 6px 0;
+            font-size: 14px;
+        }
+
+        .session-label {
+            color: #6b7280;
+        }
+
+        .session-value {
+            font-weight: 600;
+            color: #374151;
+            text-align: right;
+        }
+
+        .verification-title {
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .verification-description {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #6b7280;
+            margin-bottom: 22px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 13px 14px;
+
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+
+            font-size: 15px;
+            color: #111827;
+
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #4a90e2;
+
+            box-shadow:
+                0 0 0 3px rgba(74, 144, 226, 0.12);
+        }
+
+        .hint {
+            margin-top: 7px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .continue-button {
+            width: 100%;
+            padding: 13px 18px;
+
+            border: none;
+            border-radius: 8px;
+
+            background: #4a90e2;
+            color: #ffffff;
+
+            font-size: 14px;
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+        .continue-button:hover {
+            background: #357abd;
+        }
+
+        .error {
+            display: none;
+
+            margin-top: 14px;
+            padding: 12px 14px;
+
+            border-radius: 8px;
+
+            background: #fee2e2;
+            color: #b91c1c;
+
+            font-size: 13px;
+        }
+
+        .success {
+            display: none;
+
+            text-align: center;
+        }
+
+        .success-icon {
+            width: 54px;
+            height: 54px;
+
+            margin: 0 auto 18px;
+
+            border-radius: 50%;
+
+            background: #dcfce7;
+            color: #166534;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .success h2 {
+            margin: 0 0 8px;
+            font-size: 22px;
+        }
+
+        .success p {
+            margin: 0 0 22px;
+
+            font-size: 14px;
+            line-height: 1.6;
+
+            color: #6b7280;
+        }
+
+        .continue-flow-button {
+            width: 100%;
+            padding: 13px;
+
+            border: none;
+            border-radius: 8px;
+
+            background: #4a90e2;
+            color: white;
+
+            font-size: 14px;
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 18px;
+
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        @media (max-width: 600px) {
+
+            body {
+                padding: 16px;
+            }
+
+            .card {
+                padding: 22px;
+            }
+
+            .brand h1 {
+                font-size: 24px;
+            }
+
+            .session-row {
+                flex-direction: column;
+                gap: 2px;
+            }
+
+            .session-value {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <div class="card">
+
+        <!-- HEADER -->
+
+        <div class="brand">
+
+            <h1>
+                Homework Support
+            </h1>
+
+            <p>
+                Parent Booking
+            </p>
+
+        </div>
+
+
+        <!-- SESSION INFORMATION -->
+
+        <div class="session-info">
+
+            <div class="session-title">
+                Homework Support — Week 5
+            </div>
+
+            <div class="session-row">
+
+                <span class="session-label">
+                    Student
+                </span>
+
+                <span class="session-value">
+                    Ali Khan
+                </span>
+
+            </div>
+
+            <div class="session-row">
+
+                <span class="session-label">
+                    Session
+                </span>
+
+                <span class="session-value">
+                    Saturday, September 26, 2026
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- VERIFICATION FORM -->
+
+        <div id="verificationSection">
+
+            <div class="verification-title">
+                Confirm your email address
+            </div>
+
+            <div class="verification-description">
+                Please enter the registered parent email address
+                associated with this student. This helps us verify
+                that you are authorized to respond to this invitation.
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="email">
+                    Parent email address
+                </label>
+
+                <input
+                    id="email"
+                    type="email"
+                    placeholder="parent@example.com"
+                >
+
+                <div class="hint">
+                    Enter the email address registered with the school.
+                </div>
+
+            </div>
+
+
+            <button
+                class="continue-button"
+                onclick="verifyEmail()"
+            >
+                Continue
+            </button>
+
+
+            <div
+                id="errorMessage"
+                class="error"
+            >
+                Please enter a valid registered parent email address.
+            </div>
+
+        </div>
+
+
+        <!-- SUCCESS -->
+
+        <div
+            id="successSection"
+            class="success"
+        >
+
+            <div class="success-icon">
+                ✓
+            </div>
+
+            <h2>
+                Email verified
+            </h2>
+
+            <p>
+                Your email has been verified successfully.
+                You can now continue to the Homework Support
+                attendance and booking form.
+            </p>
+
+            <button
+                class="continue-flow-button"
+                onclick="continueToBooking()"
+            >
+                Continue to Booking
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+        Homework Support Parent Booking
+    </div>
+
+</div>
+
+
+<script>
+
+    function verifyEmail() {
+
+        const emailInput =
+            document.getElementById("email");
+
+        const email =
+            emailInput.value.trim();
+
+        const errorMessage =
+            document.getElementById("errorMessage");
+
+        const verificationSection =
+            document.getElementById("verificationSection");
+
+        const successSection =
+            document.getElementById("successSection");
+
+
+        /*
+         * Mock validation for demonstration only.
+         *
+         * In production:
+         *
+         * unique link
+         *      ↓
+         * backend identifies student/week
+         *      ↓
+         * backend validates registered email
+         */
+
+        const validEmail =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+        if (!validEmail.test(email)) {
+
+            errorMessage.style.display = "block";
+
+            return;
+        }
+
+
+        errorMessage.style.display = "none";
+
+        verificationSection.style.display = "none";
+
+        successSection.style.display = "block";
+    }
+
+
+    function continueToBooking() {
+
+        alert(
+            "Demo: Continue to the Attendance / Booking screen."
+        );
+
+    }
+
+</script>
+
+</body>
+</html>

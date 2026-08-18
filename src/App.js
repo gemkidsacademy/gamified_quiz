@@ -18,6 +18,7 @@ import DeleteDoctor from "./components/DeleteDoctor";
 import ChatbotGamifiedQuiz from "./components/ChatbotGamifiedQuiz";
 import UsageDashboard from "./components/UsageDashboard";
 import GuestLoginPage from "./components/GuestLoginPage";
+import ParentHomeworkSupportBooking from "./components/HomeworkSupport/ParentHomeworkSupportBooking";
 
 // ===================== LOGIN PAGE =====================
 function LoginPage({ setIsLoggedIn, setLoggedInUser }) {
@@ -266,6 +267,20 @@ function App() {
                 loggedInUser={loggedInUser}
               />
             </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/homework-support/:token"
+          element={
+            <ParentHomeworkSupportBooking />
+          }
+        />
+
+        <Route
+          path="/parent-homework-support"
+          element={
+            <ParentHomeworkSupportBooking />
           }
         />
       </Routes>

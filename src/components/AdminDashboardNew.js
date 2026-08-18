@@ -13,6 +13,7 @@ import QuizScheduler from "./QuizScheduler/QuizScheduler";
 import GenerateGamifiedQuizzes from "./GenerateGamifiedQuizzes/GenerateGamifiedQuizzes";
 import SchedulerRuns from "./SchedulerRuns/SchedulerRuns";
 import GuestCredentials from "./GuestCredentials/GuestCredentials";
+import HomeworkSupportAdmin from "./HomeworkSupport/HomeworkSupportAdmin";
 
 export default function AdminDashboardNew({ loggedInUser }) {
 
@@ -20,7 +21,7 @@ export default function AdminDashboardNew({ loggedInUser }) {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   return (
-    <div>
+    <div className="admin-dashboard">
 
       <h2 className="dashboard-title">
         Gamified Quiz Administration
@@ -122,6 +123,15 @@ export default function AdminDashboardNew({ loggedInUser }) {
           Guest Credentials
         </div>
 
+        <div
+          className={`tab-item ${
+            activeTab === "homework-support" ? "active" : ""
+          }`}
+          onClick={() => setActiveTab("homework-support")}
+        >
+          Homework Support
+        </div>
+
       </div>
 
       {/* Content */}
@@ -199,6 +209,14 @@ export default function AdminDashboardNew({ loggedInUser }) {
         {activeTab === "guest-credentials" && (
           <div className="tab-panel">
             <GuestCredentials
+              loggedInUser={loggedInUser}
+            />
+          </div>
+        )}
+
+        {activeTab === "homework-support" && (
+          <div className="tab-panel">
+            <HomeworkSupportAdmin
               loggedInUser={loggedInUser}
             />
           </div>
