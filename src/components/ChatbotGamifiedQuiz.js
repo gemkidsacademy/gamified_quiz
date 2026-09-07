@@ -479,7 +479,7 @@ export default function ChatbotGamifiedQuiz({
 
                       {msg.quote ? (
                         <>
-                          <div className="quote-label">Quote of the day</div>
+                          <div className="quote-label">Quote of the day (new)</div>
 
                           <div className="quote-text">“{msg.quote}”</div>
 

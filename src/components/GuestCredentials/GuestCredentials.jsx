@@ -45,15 +45,109 @@ export default function GuestCredentials({ loggedInUser }) {
             minute: "2-digit",
         });
     };
+    const downloadCSV = () => {
+    if (guests.length === 0) return;
+
+    const headers = [
+        "ID",
+        "Full Name",
+        "Contact",
+        "Method",
+        "Category",
+        "Class Year",
+        "Registered",
+        "Last Login",
+        "Status",
+    ];
+
+    const rows = guests.map((guest) => [
+        guest.id,
+        guest.full_name,
+        guest.contact,
+        guest.contact_method,
+        guest.category,
+        guest.class_year,
+        formatDate(guest.registered_at),
+        formatDate(guest.last_login),
+        guest.is_active ? "Active" : "Inactive",
+    ]);
+
+    const escapeCSV = (value) => {
+        if (value === null || value === undefined) return "";
+
+        const stringValue = String(value);
+
+        return `"${stringValue.replace(/"/g, '""')}"`;
+    };
+
+    const csvContent = [
+        headers.map(escapeCSV).join(","),
+        ...rows.map((row) => row.map(escapeCSV).join(",")),
+    ].join("\n");
+
+    const blob = new Blob(["\ufeff" + csvContent], {
+        type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `guest-credentials-${new Date()
+        .toISOString()
+        .split("T")[0]}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+};
+
 
     return (
         <div className="guest-credentials">
 
-            <h2>Guest Credentials</h2>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "10px",
+                }}
+            >
+                <div>
+                    <h2 style={{ margin: 0 }}>Guest Credentials</h2>
 
-            <p>
-                View registered guest users and their account information.
-            </p>
+                    <p style={{ marginTop: "6px" }}>
+                        View registered guest users and their account information.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={downloadCSV}
+                    disabled={loading || guests.length === 0}
+                    style={{
+                        padding: "10px 16px",
+                        border: "none",
+                        borderRadius: "6px",
+                        background: "#4285d4",
+                        color: "#fff",
+                        cursor:
+                            loading || guests.length === 0
+                                ? "not-allowed"
+                                : "pointer",
+                        opacity:
+                            loading || guests.length === 0
+                                ? 0.6
+                                : 1,
+                        fontWeight: "500",
+                    }}
+                >
+                    Download CSV
+                </button>
+            </div>
 
             {loading && (
                 <p>Loading guest users...</p>
