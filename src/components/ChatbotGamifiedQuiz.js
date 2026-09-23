@@ -263,6 +263,12 @@ export default function ChatbotGamifiedQuiz({
                 data.questions.length > 0
             ) {
 
+              const quizIntro = [
+                data.quiz_title,
+                data.questions?.[0]?.category && `Topic: ${data.questions[0].category}`,
+                data.instructions && `Instructions:\n${data.instructions}`,
+              ].filter(Boolean);
+
                 console.log(
                     "First Question:",
                     data.questions[0]
@@ -271,6 +277,15 @@ export default function ChatbotGamifiedQuiz({
                 setMessages((prev) => [
 
                     ...prev,
+
+                    ...(quizIntro.length > 0
+                      ? [
+                          {
+                            sender: "bot",
+                            text: quizIntro.join("\n\n"),
+                          },
+                        ]
+                      : []),
 
                     {
 

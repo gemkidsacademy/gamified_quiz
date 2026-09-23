@@ -74,8 +74,17 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
 
       // Show first question if quiz exists
       if (data?.questions?.length > 0) {
+        const quizIntro = [
+          data.quiz_title,
+          data.questions?.[0]?.category && `Topic: ${data.questions[0].category}`,
+          data.instructions && `Instructions:\n${data.instructions}`,
+        ].filter(Boolean);
+
         setMessages((prev) => [
           ...prev,
+          ...(quizIntro.length > 0
+            ? [{ sender: "bot", text: quizIntro.join("\n"), isQuizIntro: true }]
+            : []),
           { sender: "bot", text: data.questions[0].prompt },
         ]);
       }
@@ -226,7 +235,22 @@ export default function Chatbot_gamified_quiz({ doctorData }) {
               {msg.sender === "bot" ? (
                 <>
                   {msg.name && <div className="bot-label">{parseBoldText(msg.name)}</div>}
-                  <div dangerouslySetInnerHTML={{ __html: formatMessageWithLinks(msg.text) }} />
+                  {msg.isQuizIntro ? (
+                    <div
+                      style={{
+                        background: "rgba(255, 255, 255, 0.12)",
+                        borderLeft: "4px solid #ffffff",
+                        borderRadius: "6px",
+                        padding: "10px 12px",
+                        whiteSpace: "pre-line",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {msg.text}
+                    </div>
+                  ) : (
+                    <div dangerouslySetInnerHTML={{ __html: formatMessageWithLinks(msg.text) }} />
+                  )}
                   {Array.isArray(msg.links) && msg.links.length > 0 && (
                     <div className="pdf-links">
                       <a
